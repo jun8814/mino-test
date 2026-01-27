@@ -1,0 +1,2852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字化看板 - 矩阵式展示</title>
+    <style>
+        :root {
+            /* 响应式列宽：适配不同设备屏幕宽度 */
+            /* 使用 clamp(最小值, 推荐值, 最大值) 动态调整 */
+            --col-product-width: clamp(150px, 12vw, 220px);
+            --col-ratio-width: clamp(120px, 9vw, 160px);
+            --col-org-width: clamp(100px, 8vw, 140px);
+            --col-summary-width: clamp(90px, 6vw, 120px);
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc; /* Static light background */
+            color: #1f2937;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+            /* animation: backgroundPulse 8s ease-in-out infinite; */
+            /* 防止内容闪烁 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        @keyframes backgroundPulse {
+            0%, 100% { background: #f5f7fb; }
+            50% { background: #eef2f7; }
+        }
+        
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        
+        @keyframes topBorderPulse {
+            0%, 100% { 
+                opacity: 0.6;
+                box-shadow: 0 0 8px rgba(59, 130, 246, 0.25);
+            }
+            50% { 
+                opacity: 1;
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.45);
+            }
+        }
+        
+        @keyframes bottomBorderPulse {
+            0%, 100% { 
+                opacity: 0.5;
+                box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
+            }
+            50% { 
+                opacity: 1;
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            }
+        }
+        
+        @keyframes headerFloat {
+            0%, 100% { 
+                transform: translateY(0) scale(1);
+                background: rgba(255, 255, 255, 0.9);
+            }
+            50% { 
+                transform: translateY(-1px) scale(1.002);
+                background: rgba(248, 250, 252, 0.95);
+            }
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1d4ed8;
+            letter-spacing: 0.08em;
+            margin: 0;
+            position: relative;
+            text-shadow: 
+                0 0 8px rgba(59, 130, 246, 0.25),
+                0 2px 4px rgba(15, 23, 42, 0.08);
+            /* animation: titleGentleFloat 10s ease-in-out infinite; */
+        }
+        
+        @keyframes titleGentleFloat {
+            0%, 100% { 
+                transform: translateY(0);
+                text-shadow: 
+                    0 0 8px rgba(59, 130, 246, 0.25),
+                    0 2px 4px rgba(15, 23, 42, 0.08);
+            }
+            50% { 
+                transform: translateY(-1px);
+                text-shadow: 
+                    0 0 10px rgba(59, 130, 246, 0.35),
+                    0 2px 6px rgba(15, 23, 42, 0.12);
+            }
+        }
+        
+
+        
+        /* 控制面板样式 */
+        .control-panel {
+            background: #ffffff;
+            /* border: 1px solid #e2e8f0; */
+            border-radius: 12px;
+            padding: 12px 12px;
+            margin-bottom: 4px;
+            /* box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); */
+        }
+        
+        /* 添加表格容器的最小高度，防止跳动 */
+        .matrix-table-wrapper {
+            position: relative;
+            height: 100%;
+            overflow: auto;
+            
+        }
+        
+        /* 优化表格单元格，保持固定高度 */
+        .matrix-table tbody td {
+            padding: 8px 5px;
+            text-align: center;
+            border: 0px solid #e2e8f0;
+            background: #ffffff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            font-size: 0.8rem;
+            min-height: 55px; /* 添加最小高度 */
+            height: 55px; /* 固定高度 */
+            vertical-align: middle;
+        }
+        
+        /* 数据单元格内容容器 */
+        .data-cell-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            min-height: 36px; /* 确保内容区域有最小高度 */
+            transition: all 0.3s ease;
+        }
+        
+        /* 数据值样式优化 */
+        .data-value {
+            /* font-weight: 500; */
+            color: #6b7280;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+        
+        .data-secondary {
+            font-size: 0.75rem;
+            color: #6b7280;
+            line-height: 1.2;
+            transition: all 0.2s ease;
+        }
+        
+        /* Summary Cell Specific Styles */
+        .summary-cell .data-value,
+        .summary-cell .data-secondary {
+            /* font-weight: 700 !important; */
+            color: #2563eb;
+        }
+        
+        .summary-cell .cost-over-budget {
+            color: #dc2626 !important;
+        }
+
+        /* 添加平滑过渡效果 */
+        .matrix-table tbody td.data-cell {
+            background: #ffffff;
+            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .matrix-table tbody td.data-cell:hover {
+            border-color: #3b82f6;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+        }
+        .header-control-label {
+            font-size: 0.6rem;
+        }
+
+        
+        /* 优化比例列样式 */
+        .product-ratio {
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 2px;
+            line-height: 1.2;
+            min-height: 20px; /* 确保比例文本有固定高度 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 添加表格渲染时的过渡效果 */
+        .matrix-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            position: relative;
+            transition: opacity 0.2s ease;
+            table-layout: fixed; /* 固定表格布局，防止列宽变化 */
+        }
+        
+        /* 表格行过渡效果 */
+        .matrix-table tbody tr {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            height: 55px; /* 固定行高 */
+            min-height: 55px; /* 最小行高 */
+        }
+        
+        /* 优化模态框显示，减少对主界面的影响 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            will-change: opacity; /* 优化性能 */
+        }
+        
+        .control-row-single {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-label {
+            font-size: 0.6rem;
+            color: #64748b;
+            font-weight: 500;
+            white-space: nowrap;
+            margin-left: 6px;
+        }
+        
+        .data-mode-tabs {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .mode-tab {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            color: #2563eb;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.65rem;
+            font-weight: 500;
+            min-width: 60px;
+            text-align: center;
+            transform: scale(1);
+            will-change: transform, background-color;
+        }
+        
+        .mode-tab:hover {
+            background: rgba(59, 130, 246, 0.16);
+            border-color: rgba(59, 130, 246, 0.45);
+        }
+        
+        .mode-tab.active {
+            background: #3b82f6;
+            color: #ffffff;
+            border-color: #3b82f6;
+        }
+        
+        .status-filters {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .status-filter {
+            /* background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            color: #16a34a; */
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            color: #2563eb;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.65rem;
+            font-weight: 500;
+            min-width: 60px;
+            text-align: center;
+        }
+
+
+        .status-filter:hover {
+            background: rgba(59, 130, 246, 0.16);
+            border-color: rgba(59, 130, 246, 0.45);
+        }
+        
+        .status-filter.active {
+            background: #3b82f6;
+            color: #ffffff;
+            border-color: #3b82f6;
+        }
+        
+        /* .status-filter:hover {
+            background: rgba(34, 197, 94, 0.16);
+            border-color: rgba(34, 197, 94, 0.45);
+        }
+        
+        .status-filter.active {
+            background: #22c55e;
+            color: #ffffff;
+            border-color: #22c55e;
+        } */
+        
+        .search-box {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-input {
+            background: #f8fafc;
+            border: 1px solid #d1d5db;
+            color: #111827;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.6rem;
+            outline: none;
+            transition: all 0.3s ease;
+            width: 120px;
+        }
+        
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+        }
+        
+        .search-input::placeholder {
+            color: #94a3b8;
+        }
+        
+
+        
+        .breadcrumb-item {
+            color: #475569;
+            cursor: pointer;
+            padding: 4px 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .breadcrumb-item:hover {
+            color: #2563eb;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+
+        
+
+        
+        /* 自定义滚动条样式 */
+        .matrix-table-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .matrix-table-wrapper::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.25);
+            border-radius: 4px;
+        }
+        
+        .matrix-table-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.35);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        .matrix-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.55);
+        }
+        
+        .matrix-table-wrapper::-webkit-scrollbar-corner {
+            background: rgba(148, 163, 184, 0.25);
+        }
+        
+        /* Firefox滚动条样式 */
+        .matrix-table-wrapper {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(59, 130, 246, 0.35) rgba(148, 163, 184, 0.25);
+        }
+        
+        .matrix-container {
+            flex-grow: 1;
+            position: relative;
+            border: 0px solid #e2e8f0;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 
+                0 8px 16px rgba(15, 23, 42, 0.08),
+                0 0 18px rgba(59, 130, 246, 0.08),
+                inset 0 0 14px rgba(59, 130, 246, 0.04);
+            animation: containerGlow 4s ease-in-out infinite;
+            overflow: hidden;
+            min-height: 500px; /* 确保容器有最小高度 */
+            height: calc(100vh - 200px); /* 固定高度，减去header和控制面板的高度 */
+        }
+        
+        @keyframes containerGlow {
+            0%, 100% { 
+                box-shadow: 
+                    0 8px 16px rgba(15, 23, 42, 0.08),
+                    0 0 18px rgba(59, 130, 246, 0.08),
+                    inset 0 0 14px rgba(59, 130, 246, 0.04);
+            }
+            50% { 
+                box-shadow: 
+                    0 10px 20px rgba(15, 23, 42, 0.12),
+                    0 0 24px rgba(59, 130, 246, 0.16),
+                    inset 0 0 18px rgba(59, 130, 246, 0.08);
+            }
+        }
+        
+        .matrix-table-wrapper {
+            position: relative;
+            height: 100%;
+            overflow: auto;
+        }
+        
+        .matrix-table {
+            width: auto; /* Allow auto width to fill or scroll */
+            min-width: 100%; /* Ensure it fills at least the container */
+            border-collapse: separate; /* Required for sticky to work properly in some browsers */
+            border-spacing: 0;
+            position: relative;
+            /* 确保表格边框统一 */
+            border: none; 
+            table-layout: auto; /* Allow flexible column widths for middle columns */
+        }
+        
+        .matrix-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            /* 确保表头整体性 */
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            /* 确保表头完全覆盖数据行 */
+            backdrop-filter: blur(10px);
+            /* 增加表头的视觉厚度 */
+            transform: translateZ(0);
+        }
+        
+        /* 表头行样式，确保整体性 */
+        .matrix-table thead tr {
+            background: #ffffff !important;
+            border-bottom: 0px solid #e2e8f0;
+            /* 确保表头行完全不透明 */
+            position: relative;
+            z-index: 100;
+        }
+        
+        .matrix-table thead th {
+            background: #ffffff;
+            color: #475569; /* Slate 600 for softer text */
+            padding: 12px 8px; /* Slightly more padding */
+            text-align: center;
+            font-weight: 500;
+            border: none;
+            font-size: 0.7rem; /* Slightly smaller font */
+            letter-spacing: 0.02em;
+            text-transform: none; /* Remove uppercase for cleaner look */
+            position: relative;
+            white-space: nowrap;
+            /* 统一表头样式，确保视觉连贯性 */
+            border-collapse: collapse;
+            /* 确保边框连接自然 */
+            border-bottom: 1px solid #e2e8f0;
+            /* 确保表头单元格视觉统一 */
+            transition: all 0.2s ease;
+            /* 确保表头单元格完全不透明 */
+            background: #ffffff !important;
+        }
+        
+        /* 最后一个表头单元格不需要右边框 */
+        .matrix-table thead th:last-child {
+            border-right: none;
+        }
+        
+        /* 确保表头完全覆盖数据行，防止数据行透过 */
+        .matrix-table thead::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* 产品路径行样式 */
+        .matrix-table thead .product-path-row {
+            background: #f8fafc !important; /* Lighter background */
+            border-bottom: 1px solid #e2e8f0 !important;
+            border-top: 1px solid #e2e8f0 !important;
+            height: 32px !important;
+            min-height: 32px !important;
+            position: relative;
+            z-index: 99;
+        }
+        
+        .matrix-table thead .product-path-row td {
+            background: #f8fafc !important; /* Lighter background */
+            border: none !important;
+            padding: 6px 12px !important;
+            font-size: 12px !important;
+            vertical-align: middle !important;
+            height: 32px !important;
+            min-height: 32px !important;
+        }
+        
+        /* Column Width Settings */
+        .matrix-table thead th:first-child,
+        .matrix-table tbody td:first-child {
+            width: var(--col-product-width) !important;
+            min-width: var(--col-product-width) !important;
+            max-width: var(--col-product-width) !important;
+            box-sizing: border-box;
+        }
+
+        .matrix-table thead th:nth-child(2),
+        .matrix-table tbody td:nth-child(2) {
+            width: var(--col-ratio-width) !important;
+            min-width: var(--col-ratio-width) !important;
+            max-width: var(--col-ratio-width) !important;
+            box-sizing: border-box;
+        }
+
+        .matrix-table thead th:nth-child(n+3),
+        .matrix-table tbody td:nth-child(n+3) {
+            /* Flexible width for middle columns */
+            width: auto !important;
+            min-width: var(--col-org-width) !important;
+            /* max-width removed to allow stretching */
+        }
+
+        /* Summary Column (Last Child) */
+        .matrix-table thead th:last-child,
+        .matrix-table tbody td:last-child {
+            width: var(--col-summary-width) !important;
+            min-width: var(--col-summary-width) !important;
+            max-width: var(--col-summary-width) !important;
+            box-sizing: border-box;
+        }
+
+        .matrix-table thead th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 101;
+            background: #ffffff; /* Removed gradient */
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .matrix-table thead th:nth-child(2) {
+            position: sticky;
+            left: var(--col-product-width);
+            z-index: 101;
+            background: #ffffff; /* Removed gradient */
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .matrix-table thead th:nth-child(n+3) {
+            /* Width handled by dynamic style */
+            background: #ffffff; /* Removed gradient */
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .matrix-table thead th:last-child {
+            position: sticky;
+            right: 0;
+            z-index: 101;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.02);
+        }
+        
+        .matrix-table tbody {
+            position: relative;
+        }
+        
+        .matrix-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.06);
+        }
+        
+        .matrix-table tbody td {
+            padding: 6px 6px;
+            text-align: center;
+            border: none;
+            border-bottom: 1px solid #f1f5f9; /* Lighter border */
+            background: #ffffff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            font-size: 0.8rem;
+        }
+        
+        .matrix-table tbody td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background: #ffffff; /* Match Summary Column */
+            color: #2563eb;
+            font-weight: 600;
+            text-align: left;
+            padding: 6px 8px;
+            cursor: pointer;
+        }
+        
+        .matrix-table tbody td:nth-child(2) {
+            position: sticky;
+            left: var(--col-product-width);
+            z-index: 5;
+        }
+        
+        .matrix-table tbody td:nth-child(n+3) {
+            /* Width settings handled by unified rule above */
+        }
+
+        .matrix-table tbody td:last-child {
+            position: sticky;
+            right: 0;
+            z-index: 5;
+            background: #ffffff;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.02);
+        }
+        
+        .matrix-table tbody td:first-child:hover {
+            background: #f1f5f9;
+            color: #1e3a8a;
+            transform: translateX(2px);
+        }
+        
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .product-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+        
+        .product-subtitle {
+            font-size: 0.6rem;
+            color: #64748b;
+            font-weight: 400;
+            line-height: 1.1;
+            word-break: break-word;
+            margin-left: 16px;
+        }
+        
+
+        
+        .ratio-progress { color: #6b7280; }
+        .ratio-cost { color: #6b7280; }
+        .ratio-quality { color: #6b7280;}
+        
+
+        
+
+        
+
+        
+        /* 状态样式优化 - 不突兀但有区分 */
+        .data-secondary.status-completed {
+            /* color: #2563eb; */
+            /* font-weight: 500; */
+            /* background: rgba(59, 130, 246, 0.12);
+            padding: 2px 6px;
+            border-radius: 4px; */
+            /* border-left: 2px solid rgba(96, 165, 250, 0.3); */
+        }
+        
+        .data-secondary.status-inprogress {
+            color: #16a34a;
+            font-weight: 400;
+            font-size: 0.7rem;
+            background: rgba(34, 197, 94, 0.12);
+            padding: 2px 6px;
+            border-radius: 4px;
+            animation: breathingGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes breathingGlow {
+            0%, 100% { 
+                background: rgba(34, 197, 94, 0.12);
+                box-shadow: 0 0 0 rgba(34, 197, 94, 0);
+                color: #16a34a;
+            }
+            50% { 
+                background: rgba(34, 197, 94, 0.22);
+                box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+                color: #15803d;
+            }
+        }
+        
+        .data-secondary.status-notstarted {
+            color: #64748b;
+            font-weight: 400;
+            font-size: 0.7rem;
+            background: rgba(148, 163, 184, 0.12);
+            padding: 2px 6px;
+            border-radius: 4px;
+            opacity: 0.8;
+        }
+        
+        /* 超预算样式 */
+        .data-secondary.cost-over-budget {
+            color: #dc2626;
+            font-weight: 400;
+            font-size: 0.7rem;
+            background: rgba(239, 68, 68, 0.12);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+
+        
+        /* 进度状态指示点样式 */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+        
+        .status-dot-gray { background: #6b7280; } /* 未开始 - 灰点 */
+        .status-dot-green { background: #3b82f6; } /* 进行中且未超期 - 绿点 */
+        .status-dot-red { background: #ef4444; } /* 未完成且超期 - 红点 */
+        .status-dot-blue { background: #10b981; } /* 已完成 - 蓝点 */
+
+        /* 新 Header 样式 - 模拟 Tailwind */
+        .header-new {
+            height: 48px;
+            background-color: #ffffff; /* bg-white */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px; /* px-6 */
+            z-index: 20;
+            flex: none; /* flex-none */
+            margin-bottom: 0; /* 覆盖旧 header margin */
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* gap-4 */
+        }
+
+        .header-logo {
+            height: 28px;
+            width: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-title {
+            font-size: 1.4rem; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            letter-spacing: 0.025em; /* tracking-wide */
+            color: #0f172a; /* text-slate-900 */
+            text-shadow: none;
+            margin: 0;
+            line-height: 1.2;
+            padding-bottom: 8px;
+        }
+
+        .header-divider {
+            height: 32px; /* h-8 */
+            width: 1px;
+            background-color: #cbd5e1; /* bg-slate-300 */
+            margin: 0 8px; /* mx-4 */
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            .header-divider { display: block; }
+        }
+
+        .header-context {
+            display: none;
+            align-items: center;
+            gap: 32px; /* gap-8 */
+        }
+        @media (min-width: 1024px) {
+            .header-context { display: flex; }
+        }
+
+        .context-item {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        /* 移除旧的 .group 类依赖，改用 .context-item:hover */
+
+        .context-label {
+            font-size: 11px;
+            color: #64748b; /* text-slate-500 */
+            text-transform: uppercase;
+            letter-spacing: 0.05em; /* tracking-wider */
+            font-weight: 600;
+            line-height: 1;
+            margin-bottom: 4px;
+            transition: color 0.15s;
+        }
+
+        .context-item:hover .context-label.org { color: #0891b2; /* text-cyan-600 */ }
+        .context-item:hover .context-label.proj { color: #9333ea; /* text-purple-600 */ }
+
+        .context-value-container {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* gap-2 */
+        }
+
+        .status-dot {
+            width: 6px; /* w-1.5 */
+            height: 6px; /* h-1.5 */
+            border-radius: 50%;
+            transition: all 0.15s;
+            display: inline-block; /* 确保显示 */
+        }
+        .status-dot.cyan { background-color: #06b6d4; /* bg-cyan-500 */ }
+        .status-dot.purple { background-color: #a855f7; /* bg-purple-500 */ animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        .context-item:hover .status-dot.cyan { box-shadow: 0 0 8px rgba(6,182,212,0.4); }
+        .context-item:hover .status-dot.purple { box-shadow: 0 0 8px rgba(168,85,247,0.4); }
+
+        .context-value {
+            font-size: 0.875rem; /* text-sm */
+            color: #334155; /* text-slate-700 */
+            font-weight: 600;
+            line-height: 1;
+            transition: color 0.15s;
+        }
+        .context-item:hover .context-value { color: #0f172a; /* text-slate-900 */ }
+
+        .context-arrow {
+            width: 12px;
+            height: 12px;
+            color: #94a3b8; /* text-slate-400 */
+            transition: color 0.15s;
+        }
+        .context-item:hover .context-arrow.cyan { color: #0891b2; /* text-cyan-600 */ }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .header-clock {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            line-height: 1.2;
+        }
+
+        .clock-time {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+            /* font-family: monospace; */
+            letter-spacing: 0.05em;
+        }
+
+        .clock-date {
+            font-size: 0.65rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .header-control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .path-navigation-container {
+            display: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            min-height: 44px;
+            max-height: 44px;
+            /* margin-bottom: 8px; */
+            /* background-color: #f5f7fb */
+        }
+
+        .path-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .path-label {
+            font-size: 0.6rem;
+            color: rgb(121, 122, 122);
+        }
+
+        .path-items {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .path-breadcrumb-item {
+            font-size: 0.60rem;
+            color: #334155; /* text-slate-700 */
+            cursor: pointer;
+            transition: color 0.15s;
+            font-weight: 400;
+        }
+        .path-breadcrumb-item:hover {
+            color: #0f172a; /* text-slate-900 */
+            text-decoration: underline;
+        }
+        .path-breadcrumb-item.active {
+            color: #0f172a;
+            font-weight: 500;
+            cursor: default;
+            text-decoration: none;
+            font-size: 0.65rem;
+        }
+
+        .path-separator {
+            color: #94a3b8; /* text-slate-400 */
+            font-size: 0.75rem;
+        }
+
+        /* 复用现有的 tab 和 filter 样式，但可能需要微调 */
+
+        .project-list-container {
+            display: flex;
+            align-items: baseline;
+            gap: 12px; /* gap-3 */
+        }
+        .project-main {
+            font-size: 1rem; /* text-base */
+            color: #0f172a; /* text-slate-900 */
+            font-weight: 700;
+            font-family: monospace;
+            line-height: 1;
+        }
+        .project-sub {
+            font-size: 0.75rem; /* text-xs */
+            color: #64748b; /* text-slate-500 */
+            font-family: monospace;
+            line-height: 1;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        /* 模态框样式补充 */
+        .modal {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            min-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+        .modal-header {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+        .modal-title {
+            color: #0f172a;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .pagination-btn {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            color: #64748b;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 0;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header-new"> 
+             <div class="header-left"> 
+                 <img src="LOGO-透明背景.png" class="header-logo" alt="明珞Logo"> 
+                 <h1 class="header-title">产品组织看板 </h1> 
+                 <!-- Context Info --> 
+                 <div class="header-divider"></div> 
+                 <div class="header-controls">
+                    <div class="header-control-group">
+                        <span class="header-control-label">数据：</span>
+                        <div class="data-mode-tabs">
+                            <button class="mode-tab active" data-mode="progress">进度</button>
+                            <button class="mode-tab" data-mode="cost">成本</button>
+                            <button class="mode-tab" data-mode="quality">质量</button>
+                        </div>
+                    </div>
+                    <div class="header-control-group">
+                        <span class="header-control-label">状态：</span>
+                        <div class="status-filters">
+                            <button class="status-filter active" data-status="all">全部</button>
+                            <button class="status-filter" data-status="inprogress">进行中</button>
+                            <button class="status-filter" data-status="completed">已结束</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <span class="header-control-label">模糊：</span>
+                        <div class="search-box">
+                            <input type="text" id="product-search" placeholder="项目 / 线体搜索" class="search-input">
+                        </div>
+                    </div>
+                 </div>
+             </div> 
+             <div class="header-right">
+                <div class="header-clock" id="header-clock">
+                    <div class="clock-time" id="clock-time">00:00:00</div>
+                    <div class="clock-date" id="clock-date">YYYY-MM-DD Week</div>
+                </div>
+             </div>
+        </header>
+        
+        <div class="path-navigation-container" id="path-navigation-container">
+            <div class="path-group org-path-group">
+                <span class="path-label">组织：</span>
+                <div class="path-items" id="org-path-items">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+            <div class="path-group product-path-group">
+                <span class="path-label">产品：</span>
+                <div class="path-items" id="product-path-items">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="matrix-container">
+            <div class="matrix-table-wrapper">
+                <table class="matrix-table" id="matrix-table">
+                    <thead>
+                        <tr id="header-row">
+                            <th>产品</th>
+                            <!-- 动态生成组织列 -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 动态生成产品行和数据 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        // 数据结构定义
+        let currentDataMode = 'progress'; // progress, cost, quality
+        let currentStatusFilter = 'all'; // all, inprogress, completed
+        let currentProductSearch = '';
+        let currentOrgSearch = '';
+        let productNavigationLevel = 0; // 产品导航层级
+        let organizationNavigationLevel = 0; // 组织导航层级
+        let productNavigationPath = []; // 产品导航路径
+        let organizationNavigationPath = []; // 组织导航路径
+        // Removed pagination variables
+        
+        // 多层级组织结构
+        const organizationHierarchy = {
+            0: {
+                name: '部门',
+                items: ['机械工程部', '电气工程部', '加工制造部', '装配制造部', '现场安装部', '现场调试部', 'misp&售后']
+            },
+            1: {
+                name: '组',
+                items: {
+                    '机械工程部': ['技术管理组', '产品研发组', '通用设备设计组', '专用设备设计1组', '专用设备设计2组', '仿真组'],
+                    '电气工程部': ['技术管理组', '产品研发组', '硬件设计组', 'PLC设计组', '虚拟调试组'],
+                    '加工制造部': ['技术管理组', '加工组', '部品检测组'],
+                    '装配制造部': ['技术管理组', '专用机械装配组', '通用机械装配组', '电气装配组'],
+                    '现场安装部': ['技术管理组', '现场安装1组', '现场安装2组', '现场安装3组', '预制包装组', '质量测量组'],
+                    '现场调试部': ['技术管理组', '调试1组', '调试2组', '调试3组'],
+                    'misp&售后': ['misp实施组', '售后服务组']
+                }
+            },
+            2: {
+                name: '岗位',
+                items: {
+                    '技术管理组': ['生产计划', '生产技术', '质量控制', '数据管理', '文档管理'],
+                    '产品研发组': ['产品经理-模块化解决方案', '产品经理-通用设备', '产品经理-专用设备', '视觉技术', '研发测试', '成本专员'],
+                    '通用设备设计组': ['产品经理-前期方案', '机械标准化', '总装设计', '复杂单元设计', '一般单元设计', '3D优化', '2D制图'],
+                    '专用设备设计1组': ['产品经理-前期方案', '机械标准化', '总装设计', '复杂单元设计', '一般单元设计', '3D优化', '2D制图'],
+                    '专用设备设计2组': ['产品经理-前期方案', '机械标准化', '总装设计', '复杂单元设计', '一般单元设计', '3D优化', '2D制图'],
+                    '仿真组': ['仿真环境搭建', '设计方案验证', '安全方案验证', '工装详细验证', '布局详细验证', '方案终验证', '文档制作']
+                }
+            }
+        };
+        
+        // 多层级产品结构
+        // 产品层级结构：项目-线体-区域-工位-设备-部件
+        const productHierarchy = {
+    0: {
+        name: '项目',
+        items: [
+            { id: '1', name: '项目A', fullName: '智能制造项目A' },
+            { id: '2', name: '项目B', fullName: '新能源项目B' },
+            { id: '3', name: '项目C', fullName: '数字化转型项目C' },
+            { id: '4', name: '项目D', fullName: '自动化升级项目D' },
+            { id: '5', name: '项目E', fullName: '工业4.0项目E' },
+            { id: '6', name: '项目F', fullName: '智慧工厂项目F' },
+            { id: '7', name: '项目G', fullName: '绿色制造项目G' },
+            { id: '8', name: '项目H', fullName: '绿色制造项目H' },
+            { id: '9', name: '项目I', fullName: '智能物流项目I' }
+        ]
+    },
+    1: {
+        name: '线体',
+        items: [
+            // 项目A的线体
+            { id: '11', name: '线体A-1', fullName: '项目A-线体1', parentId: '1' },
+            { id: '12', name: '线体A-2', fullName: '项目A-线体2', parentId: '1' },
+            { id: '13', name: '线体A-3', fullName: '项目A-线体3', parentId: '1' },
+            { id: '14', name: '线体A-4', fullName: '项目A-线体4', parentId: '1' },
+            
+            // 项目B的线体
+            { id: '21', name: '线体B-1', fullName: '项目B-线体1', parentId: '2' },
+            { id: '22', name: '线体B-2', fullName: '项目B-线体2', parentId: '2' },
+            { id: '23', name: '线体B-3', fullName: '项目B-线体3', parentId: '2' },
+            
+            // 项目C的线体
+            { id: '31', name: '线体C-1', fullName: '项目C-线体1', parentId: '3' },
+            { id: '32', name: '线体C-2', fullName: '项目C-线体2', parentId: '3' },
+            
+            // 项目D的线体
+            { id: '41', name: '线体D-1', fullName: '项目D-线体1', parentId: '4' },
+            { id: '42', name: '线体D-2', fullName: '项目D-线体2', parentId: '4' },
+            { id: '43', name: '线体D-3', fullName: '项目D-线体3', parentId: '4' },
+            
+            // 项目E的线体
+            { id: '51', name: '线体E-1', fullName: '项目E-线体1', parentId: '5' },
+            { id: '52', name: '线体E-2', fullName: '项目E-线体2', parentId: '5' },
+            
+            // 项目F的线体
+            { id: '61', name: '线体F-1', fullName: '项目F-线体1', parentId: '6' },
+            { id: '62', name: '线体F-2', fullName: '项目F-线体2', parentId: '6' },
+            
+            // 项目G的线体
+            { id: '71', name: '线体G-1', fullName: '项目G-线体1', parentId: '7' },
+            { id: '72', name: '线体G-2', fullName: '项目G-线体2', parentId: '7' },
+            
+            // 项目H的线体
+            { id: '81', name: '线体H-1', fullName: '项目H-线体1', parentId: '8' },
+            { id: '82', name: '线体H-2', fullName: '项目H-线体2', parentId: '8' },
+            
+            // 项目I的线体
+            { id: '91', name: '线体I-1', fullName: '项目I-线体1', parentId: '9' },
+            { id: '92', name: '线体I-2', fullName: '项目I-线体2', parentId: '9' },
+            
+            // 项目J的线体
+            { id: '101', name: '线体J-1', fullName: '项目J-线体1', parentId: '10' },
+            { id: '102', name: '线体J-2', fullName: '项目J-线体2', parentId: '10' }
+        ]
+    },
+    2: {
+        name: '区域',
+        items: [
+            // 线体A-1的区域
+            { id: '111', name: '区域A-1-1', fullName: '线体A-1-区域1', parentId: '11' },
+            { id: '112', name: '区域A-1-2', fullName: '线体A-1-区域2', parentId: '11' },
+            { id: '113', name: '区域A-1-3', fullName: '线体A-1-区域3', parentId: '11' },
+            
+            // 线体A-2的区域
+            { id: '121', name: '区域A-2-1', fullName: '线体A-2-区域1', parentId: '12' },
+            { id: '122', name: '区域A-2-2', fullName: '线体A-2-区域2', parentId: '12' },
+            
+            // 线体B-1的区域
+            { id: '211', name: '区域B-1-1', fullName: '线体B-1-区域1', parentId: '21' },
+            { id: '212', name: '区域B-1-2', fullName: '线体B-1-区域2', parentId: '21' },
+            
+            // 线体C-1的区域
+            { id: '311', name: '区域C-1-1', fullName: '线体C-1-区域1', parentId: '31' },
+            { id: '312', name: '区域C-1-2', fullName: '线体C-1-区域2', parentId: '31' },
+            
+            // 线体D-1的区域
+            { id: '411', name: '区域D-1-1', fullName: '线体D-1-区域1', parentId: '41' },
+            { id: '412', name: '区域D-1-2', fullName: '线体D-1-区域2', parentId: '41' },
+            
+            // 线体E-1的区域
+            { id: '511', name: '区域E-1-1', fullName: '线体E-1-区域1', parentId: '51' },
+            { id: '512', name: '区域E-1-2', fullName: '线体E-1-区域2', parentId: '51' },
+            
+            // 线体F-1的区域
+            { id: '611', name: '区域F-1-1', fullName: '线体F-1-区域1', parentId: '61' },
+            { id: '612', name: '区域F-1-2', fullName: '线体F-1-区域2', parentId: '61' },
+            
+            // 线体G-1的区域
+            { id: '711', name: '区域G-1-1', fullName: '线体G-1-区域1', parentId: '71' },
+            { id: '712', name: '区域G-1-2', fullName: '线体G-1-区域2', parentId: '71' },
+            
+            // 线体H-1的区域
+            { id: '811', name: '区域H-1-1', fullName: '线体H-1-区域1', parentId: '81' },
+            { id: '812', name: '区域H-1-2', fullName: '线体H-1-区域2', parentId: '81' },
+            
+            // 线体I-1的区域
+            { id: '911', name: '区域I-1-1', fullName: '线体I-1-区域1', parentId: '91' },
+            { id: '912', name: '区域I-1-2', fullName: '线体I-1-区域2', parentId: '91' },
+            
+            // 线体J-1的区域
+            { id: '1011', name: '区域J-1-1', fullName: '线体J-1-区域1', parentId: '101' },
+            { id: '1012', name: '区域J-1-2', fullName: '线体J-1-区域2', parentId: '101' }
+        ]
+    },
+    3: {
+        name: '工位',
+        items: [
+            // 区域A-1-1的工位
+            { id: '1111', name: '工位A-1-1-1', fullName: '区域A-1-1-工位1', parentId: '111' },
+            { id: '1112', name: '工位A-1-1-2', fullName: '区域A-1-1-工位2', parentId: '111' },
+            { id: '1113', name: '工位A-1-1-3', fullName: '区域A-1-1-工位3', parentId: '111' },
+            
+            // 区域A-1-2的工位
+            { id: '1121', name: '工位A-1-2-1', fullName: '区域A-1-2-工位1', parentId: '112' },
+            { id: '1122', name: '工位A-1-2-2', fullName: '区域A-1-2-工位2', parentId: '112' },
+            
+            // 区域B-1-1的工位
+            { id: '2111', name: '工位B-1-1-1', fullName: '区域B-1-1-工位1', parentId: '211' },
+            { id: '2112', name: '工位B-1-1-2', fullName: '区域B-1-1-工位2', parentId: '211' },
+            
+            // 区域C-1-1的工位
+            { id: '3111', name: '工位C-1-1-1', fullName: '区域C-1-1-工位1', parentId: '311' },
+            { id: '3112', name: '工位C-1-1-2', fullName: '区域C-1-1-工位2', parentId: '311' },
+            
+            // 区域D-1-1的工位
+            { id: '4111', name: '工位D-1-1-1', fullName: '区域D-1-1-工位1', parentId: '411' },
+            { id: '4112', name: '工位D-1-1-2', fullName: '区域D-1-1-工位2', parentId: '411' },
+            
+            // 区域E-1-1的工位
+            { id: '5111', name: '工位E-1-1-1', fullName: '区域E-1-1-工位1', parentId: '511' },
+            { id: '5112', name: '工位E-1-1-2', fullName: '区域E-1-1-工位2', parentId: '511' },
+            
+            // 区域F-1-1的工位
+            { id: '6111', name: '工位F-1-1-1', fullName: '区域F-1-1-工位1', parentId: '611' },
+            { id: '6112', name: '工位F-1-1-2', fullName: '区域F-1-1-工位2', parentId: '611' },
+            
+            // 区域G-1-1的工位
+            { id: '7111', name: '工位G-1-1-1', fullName: '区域G-1-1-工位1', parentId: '711' },
+            { id: '7112', name: '工位G-1-1-2', fullName: '区域G-1-1-工位2', parentId: '711' },
+            
+            // 区域H-1-1的工位
+            { id: '8111', name: '工位H-1-1-1', fullName: '区域H-1-1-工位1', parentId: '811' },
+            { id: '8112', name: '工位H-1-1-2', fullName: '区域H-1-1-工位2', parentId: '811' },
+            
+            // 区域I-1-1的工位
+            { id: '9111', name: '工位I-1-1-1', fullName: '区域I-1-1-工位1', parentId: '911' },
+            { id: '9112', name: '工位I-1-1-2', fullName: '区域I-1-1-工位2', parentId: '911' },
+            
+            // 区域J-1-1的工位
+            { id: '10111', name: '工位J-1-1-1', fullName: '区域J-1-1-工位1', parentId: '1011' },
+            { id: '10112', name: '工位J-1-1-2', fullName: '区域J-1-1-工位2', parentId: '1011' }
+        ]
+    },
+    4: {
+        name: '设备',
+        items: [
+            // 工位A-1-1-1的设备
+            { id: '11111', name: '设备A-1-1-1-1', fullName: '工位A-1-1-1-设备1', parentId: '1111' },
+            { id: '11112', name: '设备A-1-1-1-2', fullName: '工位A-1-1-1-设备2', parentId: '1111' },
+            { id: '11113', name: '设备A-1-1-1-3', fullName: '工位A-1-1-1-设备3', parentId: '1111' },
+            
+            // 工位A-1-1-2的设备
+            { id: '11121', name: '设备A-1-1-2-1', fullName: '工位A-1-1-2-设备1', parentId: '1112' },
+            { id: '11122', name: '设备A-1-1-2-2', fullName: '工位A-1-1-2-设备2', parentId: '1112' },
+            
+            // 工位B-1-1-1的设备
+            { id: '21111', name: '设备B-1-1-1-1', fullName: '工位B-1-1-1-设备1', parentId: '2111' },
+            { id: '21112', name: '设备B-1-1-1-2', fullName: '工位B-1-1-1-设备2', parentId: '2111' },
+            
+            // 工位C-1-1-1的设备
+            { id: '31111', name: '设备C-1-1-1-1', fullName: '工位C-1-1-1-设备1', parentId: '3111' },
+            { id: '31112', name: '设备C-1-1-1-2', fullName: '工位C-1-1-1-设备2', parentId: '3111' },
+            
+            // 工位D-1-1-1的设备
+            { id: '41111', name: '设备D-1-1-1-1', fullName: '工位D-1-1-1-设备1', parentId: '4111' },
+            { id: '41112', name: '设备D-1-1-1-2', fullName: '工位D-1-1-1-设备2', parentId: '4111' },
+            
+            // 工位E-1-1-1的设备
+            { id: '51111', name: '设备E-1-1-1-1', fullName: '工位E-1-1-1-设备1', parentId: '5111' },
+            { id: '51112', name: '设备E-1-1-1-2', fullName: '工位E-1-1-1-设备2', parentId: '5111' },
+            
+            // 工位F-1-1-1的设备
+            { id: '61111', name: '设备F-1-1-1-1', fullName: '工位F-1-1-1-设备1', parentId: '6111' },
+            { id: '61112', name: '设备F-1-1-1-2', fullName: '工位F-1-1-1-设备2', parentId: '6111' },
+            
+            // 工位G-1-1-1的设备
+            { id: '71111', name: '设备G-1-1-1-1', fullName: '工位G-1-1-1-设备1', parentId: '7111' },
+            { id: '71112', name: '设备G-1-1-1-2', fullName: '工位G-1-1-1-设备2', parentId: '7111' },
+            
+            // 工位H-1-1-1的设备
+            { id: '81111', name: '设备H-1-1-1-1', fullName: '工位H-1-1-1-设备1', parentId: '8111' },
+            { id: '81112', name: '设备H-1-1-1-2', fullName: '工位H-1-1-1-设备2', parentId: '8111' },
+            
+            // 工位I-1-1-1的设备
+            { id: '91111', name: '设备I-1-1-1-1', fullName: '工位I-1-1-1-设备1', parentId: '9111' },
+            { id: '91112', name: '设备I-1-1-1-2', fullName: '工位I-1-1-1-设备2', parentId: '9111' },
+            
+            // 工位J-1-1-1的设备
+            { id: '101111', name: '设备J-1-1-1-1', fullName: '工位J-1-1-1-设备1', parentId: '10111' },
+            { id: '101112', name: '设备J-1-1-1-2', fullName: '工位J-1-1-1-设备2', parentId: '10111' }
+        ]
+    },
+    5: {
+        name: '部件',
+        items: [
+            // 设备A-1-1-1-1的部件
+            { id: '111111', name: '部件A-1-1-1-1-1', fullName: '设备A-1-1-1-1-部件1', parentId: '11111' },
+            { id: '111112', name: '部件A-1-1-1-1-2', fullName: '设备A-1-1-1-1-部件2', parentId: '11111' },
+            { id: '111113', name: '部件A-1-1-1-1-3', fullName: '设备A-1-1-1-1-部件3', parentId: '11111' },
+            
+            // 设备A-1-1-1-2的部件
+            { id: '111121', name: '部件A-1-1-1-2-1', fullName: '设备A-1-1-1-2-部件1', parentId: '11112' },
+            { id: '111122', name: '部件A-1-1-1-2-2', fullName: '设备A-1-1-1-2-部件2', parentId: '11112' },
+            
+            // 设备B-1-1-1-1的部件
+            { id: '211111', name: '部件B-1-1-1-1-1', fullName: '设备B-1-1-1-1-部件1', parentId: '21111' },
+            { id: '211112', name: '部件B-1-1-1-1-2', fullName: '设备B-1-1-1-1-部件2', parentId: '21111' },
+            
+            // 设备C-1-1-1-1的部件
+            { id: '311111', name: '部件C-1-1-1-1-1', fullName: '设备C-1-1-1-1-部件1', parentId: '31111' },
+            { id: '311112', name: '部件C-1-1-1-1-2', fullName: '设备C-1-1-1-1-部件2', parentId: '31111' },
+            
+            // 设备D-1-1-1-1的部件
+            { id: '411111', name: '部件D-1-1-1-1-1', fullName: '设备D-1-1-1-1-部件1', parentId: '41111' },
+            { id: '411112', name: '部件D-1-1-1-1-2', fullName: '设备D-1-1-1-1-部件2', parentId: '41111' },
+            
+            // 设备E-1-1-1-1的部件
+            { id: '511111', name: '部件E-1-1-1-1-1', fullName: '设备E-1-1-1-1-部件1', parentId: '51111' },
+            { id: '511112', name: '部件E-1-1-1-1-2', fullName: '设备E-1-1-1-1-部件2', parentId: '51111' },
+            
+            // 设备F-1-1-1-1的部件
+            { id: '611111', name: '部件F-1-1-1-1-1', fullName: '设备F-1-1-1-1-部件1', parentId: '61111' },
+            { id: '611112', name: '部件F-1-1-1-1-2', fullName: '设备F-1-1-1-1-部件2', parentId: '61111' },
+            
+            // 设备G-1-1-1-1的部件
+            { id: '711111', name: '部件G-1-1-1-1-1', fullName: '设备G-1-1-1-1-部件1', parentId: '71111' },
+            { id: '711112', name: '部件G-1-1-1-1-2', fullName: '设备G-1-1-1-1-部件2', parentId: '71111' },
+            
+            // 设备H-1-1-1-1的部件
+            { id: '811111', name: '部件H-1-1-1-1-1', fullName: '设备H-1-1-1-1-部件1', parentId: '81111' },
+            { id: '811112', name: '部件H-1-1-1-1-2', fullName: '设备H-1-1-1-1-部件2', parentId: '81111' },
+            
+            // 设备I-1-1-1-1的部件
+            { id: '911111', name: '部件I-1-1-1-1-1', fullName: '设备I-1-1-1-1-部件1', parentId: '91111' },
+            { id: '911112', name: '部件I-1-1-1-1-2', fullName: '设备I-1-1-1-1-部件2', parentId: '91111' },
+            
+            // 设备J-1-1-1-1的部件
+            { id: '1011111', name: '部件J-1-1-1-1-1', fullName: '设备J-1-1-1-1-部件1', parentId: '101111' },
+            { id: '1011112', name: '部件J-1-1-1-1-2', fullName: '设备J-1-1-1-1-部件2', parentId: '101111' }
+        ]
+    }
+};
+        
+        // 生成矩阵数据
+        function generateMatrixData() {
+            const matrixData = {};
+            const currentProducts = getCurrentProducts();
+            const currentOrganizations = getCurrentOrganizations();
+            
+            // 为当前显示的产品生成数据
+            currentProducts.forEach(product => {
+                matrixData[product.id] = {};
+                currentOrganizations.forEach((org, orgIndex) => {
+                    // 确保每个产品层级都有数据，每个组织都有数据
+                    let data;
+                    
+                    // 检查是否是主要部门（在orgWorkflow中定义的）
+                    const orgWorkflow = [
+                        '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
+                        '现场安装部', '现场调试部', 'misp&售后'
+                    ];
+                    
+                    if (orgWorkflow.includes(org)) {
+                        // 主要部门，使用原有逻辑
+                        data = generateCellData(product, org, orgIndex);
+                    } else {
+                        // 下级组织（组或岗位），使用新的生成逻辑
+                        data = generateSubOrganizationData(product, org, orgIndex);
+                    }
+                    
+                    matrixData[product.id][org] = data;
+                });
+            });
+            
+            // 如果当前是项目层级，还需要为所有线体生成数据，以便下钻时有数据
+            if (productNavigationLevel === 0) {
+                const allLineItems = productHierarchy[1].items;
+                allLineItems.forEach(lineItem => {
+                    if (!matrixData[lineItem.id]) {
+                        matrixData[lineItem.id] = {};
+                        currentOrganizations.forEach((org, orgIndex) => {
+                            let data;
+                            const orgWorkflow = [
+                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
+                                '现场安装部', '现场调试部', 'misp&售后'
+                            ];
+                            
+                            if (orgWorkflow.includes(org)) {
+                                data = generateCellData(lineItem, org, orgIndex);
+                            } else {
+                                data = generateSubOrganizationData(lineItem, org, orgIndex);
+                            }
+                            
+                            matrixData[lineItem.id][org] = data;
+                        });
+                    }
+                });
+            }
+            
+            // 如果当前是线体层级，还需要为所有区域生成数据
+            if (productNavigationLevel === 1) {
+                const allAreaItems = productHierarchy[2].items;
+                allAreaItems.forEach(areaItem => {
+                    if (!matrixData[areaItem.id]) {
+                        matrixData[areaItem.id] = {};
+                        currentOrganizations.forEach((org, orgIndex) => {
+                            let data;
+                            const orgWorkflow = [
+                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
+                                '现场安装部', '现场调试部', 'misp&售后'
+                            ];
+                            
+                            if (orgWorkflow.includes(org)) {
+                                data = generateCellData(areaItem, org, orgIndex);
+                            } else {
+                                data = generateSubOrganizationData(areaItem, org, orgIndex);
+                            }
+                            
+                            matrixData[areaItem.id][org] = data;
+                        });
+                    }
+                });
+            }
+            
+            // 如果当前是区域层级，还需要为所有工位生成数据
+            if (productNavigationLevel === 2) {
+                const allWorkstationItems = productHierarchy[3].items;
+                allWorkstationItems.forEach(workstationItem => {
+                    if (!matrixData[workstationItem.id]) {
+                        matrixData[workstationItem.id] = {};
+                        currentOrganizations.forEach((org, orgIndex) => {
+                            let data;
+                            const orgWorkflow = [
+                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
+                                '现场安装部', '现场调试部', 'misp&售后'
+                            ];
+                            
+                            if (orgWorkflow.includes(org)) {
+                                data = generateCellData(workstationItem, org, orgIndex);
+                            } else {
+                                data = generateSubOrganizationData(workstationItem, org, orgIndex);
+                            }
+                            
+                            matrixData[workstationItem.id][org] = data;
+                        });
+                    }
+                });
+            }
+            
+            // 如果当前是工位层级，还需要为所有设备生成数据
+            if (productNavigationLevel === 3) {
+                const allEquipmentItems = productHierarchy[4].items;
+                allEquipmentItems.forEach(equipmentItem => {
+                    if (!matrixData[equipmentItem.id]) {
+                        matrixData[equipmentItem.id] = {};
+                        currentOrganizations.forEach((org, orgIndex) => {
+                            let data;
+                            const orgWorkflow = [
+                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
+                                '现场安装部', '现场调试部', 'misp&售后'
+                            ];
+                            
+                            if (orgWorkflow.includes(org)) {
+                                data = generateCellData(equipmentItem, org, orgIndex);
+                            } else {
+                                data = generateSubOrganizationData(equipmentItem, org, orgIndex);
+                            }
+                            
+                            matrixData[equipmentItem.id][org] = data;
+                        });
+                    }
+                });
+            }
+            
+            // 如果当前是设备层级，还需要为所有部件生成数据
+            if (productNavigationLevel === 4) {
+                const allComponentItems = productHierarchy[5].items;
+                allComponentItems.forEach(componentItem => {
+                    if (!matrixData[componentItem.id]) {
+                        matrixData[componentItem.id] = {};
+                        currentOrganizations.forEach((org, orgIndex) => {
+                            let data;
+                            const orgWorkflow = [
+                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
+                                '现场安装部', '现场调试部', 'misp&售后'
+                            ];
+                            
+                            if (orgWorkflow.includes(org)) {
+                                data = generateCellData(componentItem, org, orgIndex);
+                            } else {
+                                data = generateSubOrganizationData(componentItem, org, orgIndex);
+                            }
+                            
+                            matrixData[componentItem.id][org] = data;
+                        });
+                    }
+                });
+            }
+            
+            return matrixData;
+        }
+        
+        function generateCellData(product, orgName, orgIndex) {
+            // 使用产品ID生成确定性的数据
+            const productSeed = product.id ? parseInt(product.id.replace(/\D/g, '0')) : 0;
+            
+            // 定义工程部门的工作顺序和特点
+            const orgWorkflow = [
+                { name: '机械工程部', duration: 60, description: '机械设计阶段', canStartConcurrently: true },
+                { name: '电气工程部', duration: 50, description: '电气设计阶段', canStartConcurrently: true },
+                { name: '加工制造部', duration: 45, description: '零件加工阶段', canStartConcurrently: false },
+                { name: '装配制造部', duration: 40, description: '设备装配阶段', canStartConcurrently: false },
+                { name: '现场安装部', duration: 35, description: '现场安装阶段', canStartConcurrently: false },
+                { name: '现场调试部', duration: 30, description: '系统调试阶段', canStartConcurrently: false },
+                { name: 'misp&售后', duration: 25, description: '售后服务阶段', canStartConcurrently: false }
+            ];
+            
+            // 找到当前组织在工作流中的位置
+            const currentOrgIndex = orgWorkflow.findIndex(org => org.name === orgName);
+            if (currentOrgIndex === -1) {
+                // 如果是组织的下级（组）或下下级（岗位），需要生成数据
+                return generateSubOrganizationData(product, orgName, orgIndex);
+            }
+            
+            const currentOrg = orgWorkflow[currentOrgIndex];
+            
+            // 检查是否有父级产品，如果有则基于父级数据生成
+            let parentData = null;
+            if (product.parentId) {
+                // 查找父级产品
+                const allProducts = [
+                    ...productHierarchy[0].items, // 项目
+                    ...productHierarchy[1].items, // 线体
+                    ...productHierarchy[2].items, // 区域
+                    ...productHierarchy[3].items, // 工位
+                    ...productHierarchy[4].items, // 设备
+                    ...productHierarchy[5].items  // 部件
+                ];
+                const parentProduct = allProducts.find(p => p.id === product.parentId);
+                if (parentProduct) {
+                    parentData = generateCellData(parentProduct, orgName, orgIndex);
+                }
+            }
+            
+            let plannedStartDate, plannedEndDate;
+            
+            if (parentData) {
+                // 基于父级数据生成子级数据
+                plannedStartDate = new Date(parentData.plannedStartDate);
+                plannedEndDate = new Date(parentData.plannedEndDate);
+                
+                // 子级的计划时间应该在父级时间范围内，或稍有调整
+                const timeVariation = ((productSeed + currentOrgIndex) % 10) - 5; // -5到4天的变化
+                plannedStartDate = new Date(plannedStartDate.getTime() + timeVariation * 24 * 60 * 60 * 1000);
+                
+                // 子级的结束时间不应超过父级结束时间太多
+                const endVariation = ((productSeed + currentOrgIndex * 3) % 8) - 3; // -3到4天的变化
+                plannedEndDate = new Date(plannedEndDate.getTime() + endVariation * 24 * 60 * 60 * 1000);
+                
+                // 确保开始时间不晚于结束时间
+                if (plannedStartDate >= plannedEndDate) {
+                    plannedEndDate = new Date(plannedStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 至少7天工期
+                }
+            } else {
+                // 顶级产品（项目），使用原有逻辑
+                const baseYear = 2025;
+                const baseMonth = 2 + (productSeed % 5);
+                const projectStartDay = 1 + (productSeed % 30); // 1-30号之间开始
+                
+                // 计算当前组织的计划开始时间
+                let cumulativeDays = 0;
+                if (currentOrg.canStartConcurrently) {
+                    cumulativeDays = 0;
+                } else {
+                    if (currentOrgIndex >= 2) {
+                        cumulativeDays = Math.max(orgWorkflow[0].duration, orgWorkflow[1].duration);
+                        for (let i = 2; i < currentOrgIndex; i++) {
+                            cumulativeDays += orgWorkflow[i].duration;
+                        }
+                    }
+                }
+                
+                plannedStartDate = new Date(baseYear, baseMonth, projectStartDay + cumulativeDays);
+                plannedEndDate = new Date(plannedStartDate.getTime() + currentOrg.duration * 24 * 60 * 60 * 1000);
+            }
+            
+            // 根据工程阶段特点确定实际执行情况
+            let actualStartDate = null;
+            let actualEndDate = null;
+            
+            // 基于产品和组织确定项目状态
+            const statusSeed = (productSeed * 7 + currentOrgIndex * 13) % 100;
+            
+            if (parentData) {
+                 // 子级的实际执行情况应该与父级完全一致
+                 if (parentData.actualStartDate) {
+                     // 如果父级已开始，子级也必须已开始
+                     const startVariation = ((productSeed + currentOrgIndex * 5) % 6) - 2; // -2到3天变化
+                     actualStartDate = new Date(parentData.actualStartDate.getTime() + startVariation * 24 * 60 * 60 * 1000);
+                     
+                     // 确保不早于计划开始时间太多
+                     if (actualStartDate < new Date(plannedStartDate.getTime() - 7 * 24 * 60 * 60 * 1000)) {
+                         actualStartDate = new Date(plannedStartDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+                     }
+                     
+                     if (parentData.actualEndDate) {
+                         // 如果父级已完成，子级也必须已完成
+                         const endVariation = ((productSeed + currentOrgIndex * 7) % 8) - 3; // -3到4天变化
+                         actualEndDate = new Date(parentData.actualEndDate.getTime() + endVariation * 24 * 60 * 60 * 1000);
+                         
+                         // 确保不晚于父级结束时间太多
+                         if (actualEndDate > new Date(parentData.actualEndDate.getTime() + 10 * 24 * 60 * 60 * 1000)) {
+                             actualEndDate = new Date(parentData.actualEndDate.getTime() + 10 * 24 * 60 * 60 * 1000);
+                         }
+                     }
+                 }
+                 // 如果父级未开始，子级也不会开始（actualStartDate 和 actualEndDate 保持 null）
+             } else {
+                // 顶级产品使用原有的状态生成逻辑
+                if (currentOrgIndex <= 1) { // 机械工程部、电气工程部
+                    if (statusSeed < 80) { // 80%概率已开始
+                        const startDelay = ((productSeed + currentOrgIndex * 3) % 12) - 5; // -5到6天延迟
+                        actualStartDate = new Date(plannedStartDate.getTime() + startDelay * 24 * 60 * 60 * 1000);
+                        
+                        if (statusSeed < 50) { // 50%概率已完成
+                            const completionDelay = ((productSeed + currentOrgIndex * 5) % 15) - 6; // -6到8天延迟
+                            actualEndDate = new Date(plannedEndDate.getTime() + completionDelay * 24 * 60 * 60 * 1000);
+                        }
+                    }
+                } else if (currentOrgIndex <= 3) { // 加工制造部、装配制造部
+                    if (statusSeed < 65) { // 65%概率已开始
+                        const startDelay = ((productSeed + currentOrgIndex * 7) % 18) - 7; // -7到10天延迟
+                        actualStartDate = new Date(plannedStartDate.getTime() + startDelay * 24 * 60 * 60 * 1000);
+                        
+                        if (statusSeed < 35) { // 35%概率已完成
+                            const completionDelay = ((productSeed + currentOrgIndex * 11) % 20) - 5; // -5到14天延迟
+                            actualEndDate = new Date(plannedEndDate.getTime() + completionDelay * 24 * 60 * 60 * 1000);
+                        }
+                    }
+                } else { // 现场安装部、现场调试部、misp&售后
+                    if (statusSeed < 45) { // 45%概率已开始
+                        const startDelay = ((productSeed + currentOrgIndex * 17) % 25) - 8; // -8到16天延迟
+                        actualStartDate = new Date(plannedStartDate.getTime() + startDelay * 24 * 60 * 60 * 1000);
+                        
+                        if (statusSeed < 20) { // 20%概率已完成
+                            const completionDelay = ((productSeed + currentOrgIndex * 19) % 35) + 5; // 5到39天延迟
+                            actualEndDate = new Date(plannedEndDate.getTime() + completionDelay * 24 * 60 * 60 * 1000);
+                        }
+                    }
+                }
+                
+                // 确保逻辑一致性：对于不能并发的阶段，检查前置条件
+                if (!currentOrg.canStartConcurrently && currentOrgIndex >= 2) {
+                    // 检查机械工程部和电气工程部是否都已完成
+                    const mechanicalData = generateCellData(product, '机械工程部', 0);
+                    const electricalData = generateCellData(product, '电气工程部', 1);
+                    
+                    const mechanicalCompleted = mechanicalData && mechanicalData.actualEndDate;
+                    const electricalCompleted = electricalData && electricalData.actualEndDate;
+                    
+                    // 如果机械和电气都没完成，当前阶段不能开始
+                    if (!mechanicalCompleted || !electricalCompleted) {
+                        actualStartDate = null;
+                        actualEndDate = null;
+                    } else if (currentOrgIndex > 2) {
+                        // 对于更后面的阶段，还需要检查直接前置阶段
+                        const prevOrgData = generateCellData(product, orgWorkflow[currentOrgIndex - 1].name, currentOrgIndex - 1);
+                        if (prevOrgData && !prevOrgData.actualEndDate && actualStartDate) {
+                            actualStartDate = null;
+                            actualEndDate = null;
+                        }
+                    }
+                }
+            }
+            
+            // 基于产品ID和组织索引确定成本数据
+            const budgetCost = 10000 + ((productSeed + currentOrgIndex) % 50000);
+            let actualCost = 0;
+            if (actualStartDate) {
+                // 增加超预算的可能性：60%-180%的范围，约50%概率超预算20%以上
+                const costRatio = 0.6 + ((productSeed + currentOrgIndex) % 120) / 100; // 60%-180%
+                actualCost = Math.floor(budgetCost * costRatio);
+            }
+            
+            // 基于产品ID和组织索引确定质量数据
+            // 如果项目未开始，问题点数量为0
+            const totalIssues = actualStartDate ? (5 + ((productSeed + currentOrgIndex) % 20)) : 0;
+            let resolvedIssues = 0;
+            if (actualStartDate && totalIssues > 0) {
+                // 根据项目进度确定已解决问题数量
+                if (actualEndDate) {
+                    // 已完成项目：80%-100%的问题已解决
+                    const resolveRate = 0.8 + ((productSeed + currentOrgIndex) % 21) / 100; // 80%-100%
+                    resolvedIssues = Math.floor(totalIssues * resolveRate);
+                } else {
+                    // 进行中项目：30%-80%的问题已解决
+                    const resolveRate = 0.3 + ((productSeed + currentOrgIndex) % 51) / 100; // 30%-80%
+                    resolvedIssues = Math.floor(totalIssues * resolveRate);
+                }
+            }
+            
+            const status = getDataStatus(actualStartDate, actualEndDate, plannedEndDate);
+            
+            return {
+                // 进度数据
+                plannedStartDate: plannedStartDate,
+                plannedEndDate: plannedEndDate,
+                actualStartDate: actualStartDate,
+                actualEndDate: actualEndDate,
+                
+                // 成本数据
+                budgetCost: budgetCost,
+                actualCost: actualCost,
+                
+                // 质量数据
+                totalIssues: totalIssues,
+                resolvedIssues: resolvedIssues,
+                
+                // 状态
+                status: status
+            };
+        }
+        
+        // 为组织的下级（组）和下下级（岗位）生成数据
+        function generateSubOrganizationData(product, orgName, orgIndex) {
+            const productSeed = product.id ? parseInt(product.id.replace(/\D/g, '0')) : 0;
+            
+            // 根据组织名称确定所属的主要部门
+            let parentDepartment = '';
+            const orgHierarchy = organizationHierarchy[1].items; // 组级别
+            for (const [dept, groups] of Object.entries(orgHierarchy)) {
+                if (groups.includes(orgName)) {
+                    parentDepartment = dept;
+                    break;
+                }
+            }
+            
+            // 如果没找到，检查是否是岗位级别
+            if (!parentDepartment) {
+                const positionHierarchy = organizationHierarchy[2].items; // 岗位级别
+                for (const [group, positions] of Object.entries(positionHierarchy)) {
+                    if (positions && positions.includes(orgName)) {
+                        // 找到岗位所属的组，再找组所属的部门
+                        for (const [dept, groups] of Object.entries(orgHierarchy)) {
+                            if (groups.includes(group)) {
+                                parentDepartment = dept;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // 如果还是没找到，默认为机械工程部
+            if (!parentDepartment) {
+                parentDepartment = '机械工程部';
+            }
+            
+            // 获取主要部门的数据作为基础
+            const parentData = generateCellData(product, parentDepartment, 0);
+            if (!parentData) return null;
+            
+            // 为下级组织生成略有差异的数据
+            const subOrgSeed = (productSeed * 11 + orgName.length * 7) % 100;
+            
+            // 在主要部门的时间基础上增加一些变化
+            let plannedStartDate = new Date(parentData.plannedStartDate);
+            let plannedEndDate = new Date(parentData.plannedEndDate);
+            
+            // 下级组织的开始时间可能稍有不同（±3天）
+            const startVariation = ((subOrgSeed + 3) % 7) - 3; // -3到3天
+            plannedStartDate = new Date(plannedStartDate.getTime() + startVariation * 24 * 60 * 60 * 1000);
+            
+            // 下级组织的工期可能稍有不同（±5天）
+            const durationVariation = ((subOrgSeed + 7) % 11) - 5; // -5到5天
+            plannedEndDate = new Date(plannedEndDate.getTime() + durationVariation * 24 * 60 * 60 * 1000);
+            
+            // 实际执行情况
+            let actualStartDate = null;
+            let actualEndDate = null;
+            
+            if (parentData.actualStartDate) {
+                // 如果主要部门已开始，下级组织也必须已开始
+                const subStartVariation = ((subOrgSeed + 13) % 9) - 4; // -4到4天
+                actualStartDate = new Date(parentData.actualStartDate.getTime() + subStartVariation * 24 * 60 * 60 * 1000);
+                
+                // 确保不早于计划开始时间太多
+                if (actualStartDate < new Date(plannedStartDate.getTime() - 7 * 24 * 60 * 60 * 1000)) {
+                    actualStartDate = new Date(plannedStartDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+                }
+                
+                if (parentData.actualEndDate) {
+                    // 如果主要部门已完成，下级组织也必须已完成
+                    const subEndVariation = ((subOrgSeed + 17) % 11) - 5; // -5到5天
+                    actualEndDate = new Date(parentData.actualEndDate.getTime() + subEndVariation * 24 * 60 * 60 * 1000);
+                    
+                    // 确保不晚于父级结束时间太多
+                    if (actualEndDate > new Date(parentData.actualEndDate.getTime() + 10 * 24 * 60 * 60 * 1000)) {
+                        actualEndDate = new Date(parentData.actualEndDate.getTime() + 10 * 24 * 60 * 60 * 1000);
+                    }
+                }
+            }
+            // 如果主要部门未开始，下级组织也不会开始（actualStartDate 和 actualEndDate 保持 null）
+            
+            // 成本数据（相对主要部门较小）
+            const budgetCost = Math.floor(parentData.budgetCost * (0.3 + (subOrgSeed % 40) / 100)); // 30%-70%
+            let actualCost = 0;
+            if (actualStartDate) {
+                // 增加超预算的可能性：60%-170%的范围，约45%概率超预算20%以上
+                const costRatio = 0.6 + ((subOrgSeed + 23) % 110) / 100; // 60%-170%
+                actualCost = Math.floor(budgetCost * costRatio);
+            }
+            
+            // 质量数据 - 如果项目未开始，问题点数量为0
+            const totalIssues = actualStartDate ? (2 + ((subOrgSeed + 29) % 10)) : 0;
+            let resolvedIssues = 0;
+            if (actualStartDate && totalIssues > 0) {
+                // 根据项目进度确定已解决问题数量
+                if (actualEndDate) {
+                    // 已完成项目：80%-100%的问题已解决
+                    const resolveRate = 0.8 + ((subOrgSeed + 31) % 21) / 100; // 80%-100%
+                    resolvedIssues = Math.floor(totalIssues * resolveRate);
+                } else {
+                    // 进行中项目：30%-80%的问题已解决
+                    const resolveRate = 0.3 + ((subOrgSeed + 31) % 51) / 100; // 30%-80%
+                    resolvedIssues = Math.floor(totalIssues * resolveRate);
+                }
+            }
+            
+            const status = getDataStatus(actualStartDate, actualEndDate, plannedEndDate);
+            
+            return {
+                // 进度数据
+                plannedStartDate: plannedStartDate,
+                plannedEndDate: plannedEndDate,
+                actualStartDate: actualStartDate,
+                actualEndDate: actualEndDate,
+                
+                // 成本数据
+                budgetCost: budgetCost,
+                actualCost: actualCost,
+                
+                // 质量数据
+                totalIssues: totalIssues,
+                resolvedIssues: resolvedIssues,
+                
+                // 状态
+                status: status
+            };
+        }
+        
+        function getDataStatus(actualStartDate, actualEndDate, plannedEndDate) {
+            if (actualEndDate) return 'completed';
+            if (!actualStartDate) return 'notstarted';
+            if (new Date() > plannedEndDate) return 'delayed';
+            return 'inprogress';
+        }
+        
+        function getProgressStatusDotClass(data) {
+            if (data.actualEndDate) {
+                return 'status-dot-blue'; // 已完成 - 蓝点
+            } else if (!data.actualStartDate) {
+                return 'status-dot-gray'; // 未开始 - 灰点
+            } else if (new Date() > data.plannedEndDate) {
+                return 'status-dot-red'; // 未完成且超期 - 红点
+            } else {
+                return 'status-dot-green'; // 进行中且未超期 - 绿点
+            }
+        }
+        
+        function getCurrentProducts() {
+            let items = productHierarchy[productNavigationLevel].items;
+            
+            // 如果不是根层级，需要根据导航路径过滤
+            if (productNavigationLevel > 0 && productNavigationPath.length > 0) {
+                const currentProduct = productNavigationPath[productNavigationPath.length - 1];
+                
+                // 根据当前层级过滤对应的产品
+                if (productNavigationLevel === 1) {
+                    // 线体层级：显示属于当前项目的线体
+                    items = items.filter(item => item.parentId === currentProduct.id);
+                } else if (productNavigationLevel === 2) {
+                    // 区域层级：显示属于当前线体的区域
+                    items = items.filter(item => item.parentId === currentProduct.id);
+                } else if (productNavigationLevel === 3) {
+                    // 工位层级：显示属于当前区域的工位
+                    items = items.filter(item => item.parentId === currentProduct.id);
+                } else if (productNavigationLevel === 4) {
+                    // 设备层级：显示属于当前工位的设备
+                    items = items.filter(item => item.parentId === currentProduct.id);
+                } else if (productNavigationLevel === 5) {
+                    // 部件层级：显示属于当前设备的部件
+                    items = items.filter(item => item.parentId === currentProduct.id);
+                }
+            }
+            
+            // 按照最大计划完成时间正序排序
+            return items.sort((a, b) => {
+                const maxPlannedEndDateA = getMaxPlannedEndDate(a);
+                const maxPlannedEndDateB = getMaxPlannedEndDate(b);
+                return maxPlannedEndDateA - maxPlannedEndDateB;
+            });
+        }
+        
+        function getMaxPlannedEndDate(product) {
+            const currentOrganizations = getCurrentOrganizations();
+            let maxDate = new Date(0); // 最小日期
+            
+            // 定义工程部门的工作顺序和特点（与generateCellData保持一致）
+            const orgWorkflow = [
+                { name: '机械工程部', duration: 45, description: '机械设计阶段', canStartConcurrently: true },
+                { name: '电气工程部', duration: 35, description: '电气设计阶段', canStartConcurrently: true },
+                { name: '加工制造部', duration: 30, description: '零件加工阶段', canStartConcurrently: false },
+                { name: '装配制造部', duration: 25, description: '设备装配阶段', canStartConcurrently: false },
+                { name: '现场安装部', duration: 20, description: '现场安装阶段', canStartConcurrently: false },
+                { name: '现场调试部', duration: 15, description: '系统调试阶段', canStartConcurrently: false },
+                { name: 'misp&售后', duration: 10, description: '售后服务阶段', canStartConcurrently: false }
+            ];
+            
+            // 生成该产品在所有组织下的数据，找出最大计划完成时间
+            currentOrganizations.forEach((orgName) => {
+                const currentOrgIndex = orgWorkflow.findIndex(org => org.name === orgName);
+                if (currentOrgIndex === -1) return; // 如果组织不在工作流中，跳过
+                
+                const currentOrg = orgWorkflow[currentOrgIndex];
+                const productSeed = product.id ? parseInt(product.id.replace(/\D/g, '0')) : 0;
+                
+                // 项目基准开始时间（基于产品ID确定）
+                const baseYear = 2025;
+                const baseMonth = 1; // 1月开始
+                const projectStartDay = 1 + (productSeed % 15); // 1-15号之间开始
+                
+                // 计算当前组织的计划开始时间
+                let cumulativeDays = 0;
+                if (currentOrg.canStartConcurrently) {
+                    // 机械工程部和电气工程部可以同时开始，不累加前面的工期
+                    cumulativeDays = 0;
+                } else {
+                    // 其他部门需要等待前面的部门完成
+                    // 机械工程部和电气工程部取较长的工期作为基准
+                    if (currentOrgIndex >= 2) {
+                        cumulativeDays = Math.max(orgWorkflow[0].duration, orgWorkflow[1].duration);
+                        // 再累加后续已完成的工期
+                        for (let i = 2; i < currentOrgIndex; i++) {
+                            cumulativeDays += orgWorkflow[i].duration;
+                        }
+                    }
+                }
+                
+                // 计算计划完成时间
+                const plannedStartDate = new Date(baseYear, baseMonth, projectStartDay + cumulativeDays);
+                const plannedEndDate = new Date(plannedStartDate.getTime() + currentOrg.duration * 24 * 60 * 60 * 1000);
+                
+                if (plannedEndDate > maxDate) {
+                    maxDate = plannedEndDate;
+                }
+            });
+            
+            return maxDate;
+        }
+        
+        function getCurrentOrganizations() {
+            let items = organizationHierarchy[organizationNavigationLevel].items;
+            
+            // 如果是根层级（部门级别），直接返回数组
+            if (organizationNavigationLevel === 0) {
+                return items;
+            }
+            
+            // 如果不是根层级，需要根据导航路径过滤
+            if (organizationNavigationLevel > 0 && organizationNavigationPath.length > 0) {
+                const currentOrg = organizationNavigationPath[organizationNavigationPath.length - 1];
+                
+                if (organizationNavigationLevel === 1) {
+                    // 从部门到组：根据当前部门获取对应的组
+                    return items[currentOrg] || [];
+                } else if (organizationNavigationLevel === 2) {
+                    // 从组到岗位：根据当前组获取对应的岗位
+                    return items[currentOrg] || [];
+                }
+            }
+            
+            return [];
+        }
+        
+        // 渲染路径导航
+        function renderPathNavigation() {
+            const productPathContainer = document.getElementById('product-path-items');
+            const orgPathContainer = document.getElementById('org-path-items');
+            
+            if (!productPathContainer || !orgPathContainer) return;
+            
+            // Render Product Path
+            let productHTML = '';
+            // Root
+            productHTML += `<div class="path-breadcrumb-item ${productNavigationLevel === 0 ? 'active' : ''}" onclick="navigateToLevel(0, organizationNavigationLevel)">ALL</div>`;
+            
+            productNavigationPath.forEach((product, index) => {
+                productHTML += `<span class="path-separator">/</span>`;
+                const isLast = index === productNavigationPath.length - 1;
+                const level = index + 1;
+                productHTML += `<div class="path-breadcrumb-item ${isLast ? 'active' : ''}" onclick="navigateToLevel(${level}, organizationNavigationLevel)">${product.name}</div>`;
+            });
+            productPathContainer.innerHTML = productHTML;
+            
+            // Render Organization Path
+            let orgHTML = '';
+            // Root
+            orgHTML += `<div class="path-breadcrumb-item ${organizationNavigationLevel === 0 ? 'active' : ''}" onclick="navigateToLevel(productNavigationLevel, 0)">公司</div>`;
+            
+            organizationNavigationPath.forEach((org, index) => {
+                orgHTML += `<span class="path-separator">/</span>`;
+                const isLast = index === organizationNavigationPath.length - 1;
+                const level = index + 1;
+                orgHTML += `<div class="path-breadcrumb-item ${isLast ? 'active' : ''}" onclick="navigateToLevel(productNavigationLevel, ${level})">${org}</div>`;
+            });
+            orgPathContainer.innerHTML = orgHTML;
+        }
+
+        // 渲染矩阵表格
+        function renderMatrix() {
+            const matrixData = generateMatrixData();
+            const headerRow = document.getElementById('header-row');
+            const tbody = document.querySelector('#matrix-table tbody');
+            
+            // 添加淡出效果
+            const table = document.getElementById('matrix-table');
+            table.style.opacity = '0.7';
+            
+            // 使用 requestAnimationFrame 确保平滑过渡
+            requestAnimationFrame(() => {
+            // 更新路径导航
+            renderPathNavigation();
+            
+            // 清空现有内容
+            const ratioColumnName = getRatioColumnName();
+            headerRow.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            // 清除之前的产品路径行 (以防万一还有残留)
+            const existingPathRow = document.getElementById('product-path-row');
+            if (existingPathRow) {
+                existingPathRow.remove();
+            }
+            
+            const currentProducts = getCurrentProducts();
+            const currentOrganizations = getCurrentOrganizations();
+            
+            // Show all organizations, horizontal scrolling handles overflow
+            const visibleOrganizations = currentOrganizations.filter(org => shouldShowOrganization(org));
+            
+            // 计算动态列数并设置CSS变量
+            // const dynamicColumns = Math.max(visibleOrganizations.length, 1); // 确保至少有1列
+            // document.documentElement.style.setProperty('--dynamic-columns', dynamicColumns);
+            
+            // --- 修改开始：直接在 headerRow 生成单行表头 ---
+            
+            // 1. 添加产品列
+            const productCell = document.createElement('th');
+            productCell.textContent = '产品';
+            productCell.style.cursor = 'pointer';
+            // Width handled by CSS variable now
+            // productCell.style.width = '180px'; 
+            // 如果需要支持产品上钻，可以在这里添加点击事件
+            if (productNavigationLevel > 0) {
+                 productCell.title = '点击返回上一级';
+                 productCell.onclick = () => navigateToLevel(productNavigationLevel - 1, organizationNavigationLevel);
+            }
+            headerRow.appendChild(productCell);
+            
+            // 2. 添加比例列
+            const ratioCell = document.createElement('th');
+            ratioCell.textContent = getRatioColumnName();
+            // Width handled by CSS variable now
+            // ratioCell.style.width = '100px'; 
+            headerRow.appendChild(ratioCell);
+            
+            // 3. 生成列头（组织）
+            visibleOrganizations.forEach((org, index) => {
+                    const th = document.createElement('th');
+                    // Width handled by CSS variable now
+                    // th.style.width = '120px'; 
+                    
+                    // 检查组织是否有下级
+                    const nextLevel = organizationNavigationLevel + 1;
+                    const nextLevelItems = organizationHierarchy[nextLevel] ? organizationHierarchy[nextLevel].items : {};
+                    let hasChildren = false;
+                    
+                    if (organizationNavigationLevel === 0) {
+                        // 部门级别：检查是否有对应的组
+                        hasChildren = nextLevelItems[org] && nextLevelItems[org].length > 0;
+                    } else if (organizationNavigationLevel === 1) {
+                        // 组级别：检查是否有对应的岗位
+                        hasChildren = nextLevelItems[org] && nextLevelItems[org].length > 0;
+                    }
+                    
+                    if (hasChildren) {
+                        th.textContent = org;
+                        th.onclick = () => drillDownOrganization(org);
+                        th.style.cursor = 'pointer';
+                        th.title = `点击下钻到 ${org}`;
+                    } else {
+                        th.textContent = org;
+                        th.style.cursor = 'default';
+                        th.title = `${org}（无下级）`;
+                    }
+                    
+                    headerRow.appendChild(th);
+            });
+
+            // Add padding columns if less than 7 organizations
+            const minColumns = 7;
+            const paddingCount = Math.max(0, minColumns - visibleOrganizations.length);
+            if (paddingCount > 0) {
+                for (let i = 0; i < paddingCount; i++) {
+                    const th = document.createElement('th');
+                    th.style.cursor = 'default';
+                    th.innerHTML = '&nbsp;';
+                    headerRow.appendChild(th);
+                }
+            }
+
+            // 4. 添加固定汇总列 (Last Column)
+            const summaryCell = document.createElement('th');
+            summaryCell.textContent = getSummaryColumnName();
+            // Width handled by CSS variable now
+            headerRow.appendChild(summaryCell);
+            
+            // Removed pagination controls
+            const controls = document.getElementById('org-pagination-controls');
+            if (controls) controls.style.display = 'none';
+            
+            // --- 修改结束 ---
+            
+            // 生成产品行
+            currentProducts.forEach(product => {
+                if (!shouldShowProduct(product)) return;
+                
+                const row = document.createElement('tr');
+                
+                // 产品名称列
+                const productCell = document.createElement('td');
+                
+                // 检查产品是否有下级
+                const nextLevel = productNavigationLevel + 1;
+                const nextLevelItems = productHierarchy[nextLevel] ? productHierarchy[nextLevel].items : [];
+                const hasChildren = nextLevelItems.some(item => item.parentId === product.id);
+                
+                // 计算产品的整体状态
+                const productStatus = getProductOverallStatus(product, matrixData, currentOrganizations);
+                
+                productCell.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-name">
+                            <span class="status-dot status-dot-${productStatus}"></span>
+                            ${product.name}
+                        </div>
+                        <div class="product-subtitle">${product.fullName}</div>
+                    </div>
+                `;
+                productCell.onclick = () => drillDownProduct(product);
+                productCell.title = `点击下钻到 ${product.name}`;
+                row.appendChild(productCell);
+                
+                // 比例列
+                const ratioCell = document.createElement('td');
+                ratioCell.style.textAlign = 'center';
+                ratioCell.style.position = 'sticky';
+                // ratioCell.style.left = window.innerWidth <= 768 ? '180px' : '180px'; // This JS logic might be redundant with CSS now but kept for safety/logic flow
+                ratioCell.style.zIndex = '4';
+                ratioCell.style.background = '#ffffff'; // Changed to match Summary Column (#ffffff)
+                // Width handled by CSS variable now
+                // ratioCell.style.minWidth = '100px'; 
+                // ratioCell.style.maxWidth = '100px'; 
+                
+                const ratio = calculateProductRatio(product, matrixData, currentOrganizations);
+                
+                // Determine progress bar color
+                let progressColor = '#2563eb'; // Default blue for progress
+                if (currentDataMode === 'cost') {
+                    progressColor = ratio > 100 ? '#ef4444' : '#2563eb'; // Red if over budget, green if under
+                } else if (currentDataMode === 'quality') {
+                    progressColor = '#2563eb'; // Purple for quality
+                } else {
+                    // Progress mode
+                    progressColor = ratio >= 100 ? '#10b981' : '#2563eb'; // Green if done, blue if in progress
+                }
+
+                ratioCell.innerHTML = `
+                    <div class="product-ratio ratio-${currentDataMode}" style="display: flex; flex-direction: row; align-items: center; justify-content: center; height: 100%; gap: 6px; padding: 0 4px;">
+                        <div style="flex: 1; height: 6px; background-color: #e2e8f0; border-radius: 3px; overflow: hidden; min-width: 40px;">
+                            <div style="width: ${Math.min(ratio, 100)}%; height: 100%; background-color: ${progressColor}; border-radius: 3px;"></div>
+                        </div>
+                        <span style="font-weight: 400; font-size: 0.7rem; white-space: nowrap;">${getRatioText(ratio)}</span>
+                    </div>
+                `;
+                row.appendChild(ratioCell);
+                
+                // 组织数据列
+                visibleOrganizations.forEach(org => {
+                    // Note: No need to check shouldShowOrganization(org) here as visibleOrganizations is already filtered and sliced
+                    
+                    const dataCell = document.createElement('td');
+                    dataCell.className = 'data-cell';
+                    // Width handled by CSS variable now
+                    // dataCell.style.width = '120px'; 
+                    
+                    const data = matrixData[product.id][org];
+                    // 确保每个产品层级都有数据，每个组织都有数据
+                    if (data) {
+                        const cellContent = getCellContent(data);
+                        dataCell.innerHTML = cellContent;
+                        dataCell.style.background = getCellBackgroundColor(data);
+                        dataCell.style.cursor = 'default';
+                    } else {
+                        dataCell.innerHTML = '<div style="color: #64748b;">-</div>';
+                        dataCell.style.cursor = 'default';
+                    }
+                    
+                    row.appendChild(dataCell);
+                });
+
+                // Add padding cells if less than 7 organizations
+                if (paddingCount > 0) {
+                    for (let i = 0; i < paddingCount; i++) {
+                        const dataCell = document.createElement('td');
+                        dataCell.className = 'data-cell';
+                        dataCell.style.cursor = 'default';
+                        dataCell.innerHTML = '';
+                        row.appendChild(dataCell);
+                    }
+                }
+
+                // 汇总数据列
+                const summaryCell = document.createElement('td');
+                summaryCell.className = 'data-cell summary-cell';
+                // summaryCell style handled by CSS :last-child
+                
+                const summaryContent = getSummaryCellContent(product, matrixData, currentOrganizations);
+                summaryCell.innerHTML = summaryContent;
+                row.appendChild(summaryCell);
+                
+                tbody.appendChild(row);
+            });
+            
+            // 恢复表格透明度并添加淡入效果
+            requestAnimationFrame(() => {
+                table.style.opacity = '1';
+            });
+            });
+        }
+        
+        /* Removed pagination related functions */
+
+        function getSummaryCellContent(product, matrixData, organizations) {
+            const productData = organizations.map(org => matrixData[product.id][org]).filter(d => d);
+            
+            if (productData.length === 0) return '<div class="data-cell-content"><div style="color: #64748b;">-</div></div>';
+
+            switch (currentDataMode) {
+                case 'progress':
+                    // Calculate duration in days (max end date - min start date) or planned duration
+                    // Let's use planned duration for consistency: max planned end - min planned start
+                    let minStartDate = null;
+                    let maxEndDate = null;
+                    
+                    productData.forEach(d => {
+                        if (!minStartDate || d.plannedStartDate < minStartDate) minStartDate = d.plannedStartDate;
+                        if (!maxEndDate || d.plannedEndDate > maxEndDate) maxEndDate = d.plannedEndDate;
+                    });
+                    
+                    if (minStartDate && maxEndDate) {
+                        const duration = Math.ceil((maxEndDate - minStartDate) / (1000 * 60 * 60 * 24));
+                        return `<div class="data-cell-content"><div class="data-value">${duration}</div></div>`;
+                    }
+                    return '<div class="data-cell-content"><div style="color: #64748b;">-</div></div>';
+
+                case 'cost':
+                    // Summary: Estimated (Budget) / Actual
+                    const totalBudget = productData.reduce((sum, d) => sum + d.budgetCost, 0);
+                    const totalActual = productData.reduce((sum, d) => sum + d.actualCost, 0);
+                    
+                    // Check if over budget
+                    const isOverBudget = totalActual > 0 && totalBudget > 0 && (totalActual / totalBudget) > 1.2;
+                    const overBudgetClass = isOverBudget ? 'cost-over-budget' : '';
+                    
+                    return `
+                        <div class="data-cell-content">
+                            <div class="data-value">¥${(totalBudget / 1000).toFixed(0)}k</div>
+                            <div class="data-secondary ${overBudgetClass}">¥${(totalActual / 1000).toFixed(0)}k</div>
+                        </div>
+                    `;
+
+                case 'quality':
+                    // Open Issues = Total - Resolved
+                    const totalIssues = productData.reduce((sum, d) => sum + d.totalIssues, 0);
+                    const resolvedIssues = productData.reduce((sum, d) => sum + d.resolvedIssues, 0);
+                    const openIssues = totalIssues - resolvedIssues;
+                    
+                    return `
+                        <div class="data-cell-content">
+                            <div class="data-value" style="color: ${openIssues > 0 ? '#2563eb' : '#10b981'}">${openIssues}</div>
+                        </div>
+                    `;
+                    
+                default:
+                    return '<div class="data-cell-content"><div style="color: #64748b;">-</div></div>';
+            }
+        }
+
+        function getCellContent(data) {
+            switch (currentDataMode) {
+                case 'progress':
+                    // 添加年份显示，格式为 YY/MM/DD
+                    const plannedEndDate = data.plannedEndDate.toLocaleDateString('zh-CN', {
+                        year: '2-digit', 
+                        month: '2-digit', 
+                        day: '2-digit'
+                    }).replace(/\//g, '/');
+                    
+                    let actualEndDate;
+                    let statusClass = '';
+                    
+                    if (data.actualEndDate) {
+                        actualEndDate = data.actualEndDate.toLocaleDateString('zh-CN', {
+                            year: '2-digit', 
+                            month: '2-digit', 
+                            day: '2-digit'
+                        }).replace(/\//g, '/');
+                        statusClass = 'status-completed';
+                    } else if (data.actualStartDate) {
+                        actualEndDate = '进行中';
+                        statusClass = 'status-inprogress';
+                    } else {
+                        actualEndDate = '未开始';
+                        statusClass = 'status-notstarted';
+                    }
+                    
+                    return `
+                        <div class="data-cell-content">
+                        <div class="data-value">${plannedEndDate}</div>
+                        <div class="data-secondary ${statusClass}">${actualEndDate}</div>
+                        </div>
+                    `;
+                    
+                case 'cost':
+                    // 判断是否超预算20%以上
+                    const isOverBudget20 = data.actualCost > 0 && data.budgetCost > 0 && 
+                                          (data.actualCost / data.budgetCost) > 1.2;
+                    const overBudgetClass = isOverBudget20 ? 'cost-over-budget' : '';
+                    
+                    return `
+                        <div class="data-cell-content">
+                        <div class="data-value">¥${(data.budgetCost / 1000).toFixed(0)}k</div>
+                        <div class="data-secondary ${overBudgetClass}">¥${(data.actualCost / 1000).toFixed(0)}k</div>
+                        </div>
+                    `;
+                    
+                case 'quality':
+                    // 如果问题点数量为0，显示 "-"
+                    if (data.totalIssues === 0) {
+                        return `
+                            <div class="data-cell-content">
+                            <div class="data-value">-</div>
+                            <div class="data-secondary"></div>
+                            </div>
+                        `;
+                    }
+                    return `
+                        <div class="data-cell-content">
+                        <div class="data-value">${data.totalIssues}项</div>
+                        <div class="data-secondary">${data.resolvedIssues}项关闭</div>
+                        </div>
+                    `;
+                    
+                default:
+                    return '<div class="data-cell-content"><div style="color: #4b5563;">-</div></div>';
+            }
+        }
+        
+        function calculateProductRatio(product, matrixData, organizations) {
+            const productData = organizations.map(org => matrixData[product.id][org]).filter(d => d);
+            if (productData.length === 0) return 0;
+            
+            switch (currentDataMode) {
+                case 'progress':
+                    // 整体进度 = 已完成任务 / 总任务
+                    const completedTasks = productData.filter(d => d.status === 'completed').length;
+                    return (completedTasks / productData.length * 100);
+                    
+                case 'cost':
+                    // 预实比 = 实际成本 / 预算成本
+                    const totalBudget = productData.reduce((sum, d) => sum + d.budgetCost, 0);
+                    const totalActual = productData.reduce((sum, d) => sum + d.actualCost, 0);
+                    return totalBudget > 0 ? (totalActual / totalBudget * 100) : 0;
+                    
+                case 'quality':
+                    // 问题关闭率 = 已解决问题 / 总问题
+                    const totalIssues = productData.reduce((sum, d) => sum + d.totalIssues, 0);
+                    const resolvedIssues = productData.reduce((sum, d) => sum + d.resolvedIssues, 0);
+                    return totalIssues > 0 ? (resolvedIssues / totalIssues * 100) : 0;
+                    
+                default:
+                    return 0;
+            }
+        }
+        
+        function getRatioText(ratio) {
+            switch (currentDataMode) {
+                case 'progress':
+                    return `${ratio.toFixed(1)}%`;
+                case 'cost':
+                    return `${ratio.toFixed(1)}%`;
+                case 'quality':
+                    return `${ratio.toFixed(1)}%`;
+                default:
+                    return '';
+            }
+        }
+        
+        function getSummaryColumnName() {
+            switch (currentDataMode) {
+                case 'progress':
+                    return '周期(天)';
+                case 'cost':
+                    return '汇总';
+                case 'quality':
+                    return '未关闭问题数';
+                default:
+                    return '汇总';
+            }
+        }
+
+        function getRatioColumnName() {
+            switch (currentDataMode) {
+                case 'progress':
+                    return '整体进度';
+                case 'cost':
+                    return '预实比';
+                case 'quality':
+                    return '问题关闭率';
+                default:
+                    return '比例';
+            }
+        }
+        
+
+        
+        function getProductOverallStatus(product, matrixData, organizations) {
+            const productData = organizations.map(org => matrixData[product.id][org]).filter(d => d);
+            if (productData.length === 0) return 'gray';
+            
+            const now = new Date();
+            
+            // 检查是否有超期的部门（未完成且超过计划结束日期）
+            const hasOverdue = productData.some(d => {
+                return !d.actualEndDate && now > d.plannedEndDate;
+            });
+            
+            // 如果有一个部门超期就是红色
+            if (hasOverdue) {
+                return 'red';
+            }
+            
+            // 检查所有部门的状态
+            const allCompleted = productData.every(d => d.actualEndDate);
+            const allNotStarted = productData.every(d => !d.actualStartDate);
+            const hasInProgress = productData.some(d => d.actualStartDate && !d.actualEndDate);
+            
+            // 都已完成的是蓝色
+            if (allCompleted) {
+                return 'blue';
+            }
+            
+            // 都没有超期且是未开始的是灰色
+            if (allNotStarted) {
+                return 'gray';
+            }
+            
+            // 都没有超期且是进行中的是绿色（包括部分完成、部分进行中的情况）
+            if (hasInProgress || !allNotStarted) {
+                return 'green';
+            }
+            
+            // 默认返回灰色
+            return 'gray';
+        }
+        
+
+        
+        function getCellBackgroundColor(data) {
+            switch (currentDataMode) {
+                case 'progress':
+                    return 'rgba(248, 250, 252, 0.65)';
+                    
+                // case 'cost':
+                //     // 预实比超20%的变红
+                //     if (data.actualCost > 0 && data.budgetCost > 0) {
+                //         const costRatio = (data.actualCost / data.budgetCost);
+                //         if (costRatio > 1.2) { // 超过20%
+                //             return 'rgba(239, 68, 68, 0.2)'; // 红色背景
+                //         }
+                //     }
+                //     break;
+                    
+                case 'quality':
+                    // 质量模式不需要特殊颜色
+                    break;
+            }
+            
+            // 默认背景色
+            return 'rgba(248, 250, 252, 0.95)';
+        }
+        
+        // 筛选和搜索
+        function shouldShowProduct(product) {
+            // if (currentProductSearch && !product.name.toLowerCase().includes(currentProductSearch.toLowerCase()) 
+            //     && !product.fullName.toLowerCase().includes(currentProductSearch.toLowerCase())) {
+            //     return false;
+            // }
+            return true;
+        }
+        
+        function shouldShowOrganization(org) {
+            // if (currentOrgSearch && !org.toLowerCase().includes(currentOrgSearch.toLowerCase())) {
+            //     return false;
+            // }
+            return true;
+        }
+        
+
+        
+        // 下钻功能
+        function drillDownProduct(product) {
+            const maxLevel = Math.max(...Object.keys(productHierarchy).map(Number));
+            
+            if (productNavigationLevel < maxLevel) {
+                // 检查当前产品是否有下级
+                const nextLevel = productNavigationLevel + 1;
+                const nextLevelItems = productHierarchy[nextLevel].items;
+                const hasChildren = nextLevelItems.some(item => item.parentId === product.id);
+                
+                if (hasChildren) {
+                    // 添加点击反馈
+                    const productCell = event.target.closest('td');
+                    if (productCell) {
+                        productCell.style.transform = 'scale(0.98)';
+                        setTimeout(() => {
+                            productCell.style.transform = 'scale(1)';
+                        }, 150);
+                    }
+                    
+                    productNavigationLevel++;
+                    productNavigationPath.push(product);
+                    updateNavigationButtons();
+                    
+                    // 延迟渲染，确保动画完成
+                    setTimeout(() => {
+                        renderMatrix();
+                    }, 100);
+                }
+            }
+        }
+        
+        function drillDownOrganization(org) {
+            if (organizationNavigationLevel < Object.keys(organizationHierarchy).length - 1) {
+                // 检查当前组织是否有下级
+                const nextLevel = organizationNavigationLevel + 1;
+                const nextLevelItems = organizationHierarchy[nextLevel].items;
+                let hasChildren = false;
+                
+                if (organizationNavigationLevel === 0) {
+                    // 部门级别：检查是否有对应的组
+                    hasChildren = nextLevelItems[org] && nextLevelItems[org].length > 0;
+                } else if (organizationNavigationLevel === 1) {
+                    // 组级别：检查是否有对应的岗位
+                    hasChildren = nextLevelItems[org] && nextLevelItems[org].length > 0;
+                }
+                
+                if (hasChildren) {
+                    // 添加点击反馈
+                    const orgCell = event.target.closest('th');
+                    if (orgCell) {
+                        orgCell.style.transform = 'scale(0.98)';
+                        setTimeout(() => {
+                            orgCell.style.transform = 'scale(1)';
+                        }, 150);
+                    }
+                    
+                    organizationNavigationLevel++;
+                    organizationNavigationPath.push(org);
+                    updateNavigationButtons();
+                    
+                    // 延迟渲染，确保动画完成
+                    setTimeout(() => {
+                        renderMatrix();
+                    }, 100);
+                }
+            }
+        }
+        
+        function navigateToLevel(productLevel, orgLevel) {
+            productNavigationLevel = productLevel;
+            organizationNavigationLevel = orgLevel;
+            productNavigationPath = productNavigationPath.slice(0, productLevel);
+            organizationNavigationPath = organizationNavigationPath.slice(0, orgLevel);
+            updateNavigationButtons();
+            renderMatrix();
+        }
+        
+
+        
+
+        
+        // 事件处理
+        function switchDataMode(mode) {
+            if (currentDataMode === mode) return; // 避免重复切换
+            
+            currentDataMode = mode;
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.mode === mode);
+            });
+            
+            // 添加按钮切换的视觉反馈
+            const activeTab = document.querySelector(`.mode-tab[data-mode="${mode}"]`);
+            if (activeTab) {
+                activeTab.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    activeTab.style.transform = 'scale(1)';
+                }, 150);
+            }
+            
+            // 延迟渲染，确保按钮动画完成
+            setTimeout(() => {
+            renderMatrix();
+            }, 100);
+        }
+        
+        // 更新导航按钮状态
+        function updateNavigationButtons() {
+            // 当前没有导航按钮，保留函数以备将来使用
+        }
+        
+        function switchStatusFilter(status) {
+            currentStatusFilter = status;
+            document.querySelectorAll('.status-filter').forEach(filter => {
+                filter.classList.toggle('active', filter.dataset.status === status);
+            });
+            renderMatrix();
+        }
+        
+        function updateProductSearch(value) {
+            currentProductSearch = value;
+            renderMatrix();
+        }
+        
+        function updateOrgSearch(value) {
+            currentOrgSearch = value;
+            renderMatrix();
+        }
+        
+
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定数据模式切换
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.addEventListener('click', () => switchDataMode(tab.dataset.mode));
+            });
+            
+            // 绑定状态筛选
+            document.querySelectorAll('.status-filter').forEach(filter => {
+                filter.addEventListener('click', () => switchStatusFilter(filter.dataset.status));
+            });
+            
+            // 绑定搜索
+            // document.getElementById('product-search').addEventListener('input', (e) => updateProductSearch(e.target.value));
+            // document.getElementById('org-search').addEventListener('input', (e) => updateOrgSearch(e.target.value));
+            
+
+            
+            // 初始渲染
+            renderMatrix();
+            updateNavigationButtons();
+            
+            // 启动时钟
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+
+        function updateClock() {
+            const now = new Date();
+            const timeElement = document.getElementById('clock-time');
+            const dateElement = document.getElementById('clock-date');
+            
+            if (timeElement && dateElement) {
+                // Time: HH:mm:ss
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+                
+                // Date: YYYY-MM-DD
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                dateElement.textContent = `${year}-${month}-${day}`;
+            }
+        }
+    </script>
+    <!-- 模态框结构 -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">详细信息</h2>
+            </div>
+            <div class="modal-content">
+                <p style="color: #64748b; margin-bottom: 12px;">这里显示更多详细信息...</p>
+                <div style="background: #f1f5f9; padding: 12px; border-radius: 8px;">
+                    <p style="font-size: 0.9rem; color: #475569;">功能开发中</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal() {
+            const modal = document.getElementById('modal-overlay');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Trigger reflow
+                void modal.offsetWidth;
+                modal.classList.add('show');
+                modal.style.opacity = '1';
+            }
+        }
+
+        function closeModal(event) {
+            if (event.target.id === 'modal-overlay') {
+                const modal = document.getElementById('modal-overlay');
+                if (modal) {
+                    modal.style.opacity = '0';
+                    modal.classList.remove('show');
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                    }, 300);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
