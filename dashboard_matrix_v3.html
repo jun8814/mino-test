@@ -1946,12 +1946,13 @@
                     const budget = Math.floor(Math.random() * (max - min + 1)) + min;
                     
                     // Generate Actual (some > planned)
-                    // 30% chance of being higher
+                    // 20% chance of being higher
                     let actual = 0;
                     // Check if the post status is started (based on generated data)
                     const existingData = globalMatrixData[lineBody.id][post];
                     if (existingData && existingData.actualStartDate) {
-                         const ratio = Math.random() > 0.7 ? (1.1 + Math.random() * 0.5) : (0.8 + Math.random() * 0.2);
+                         // > 0.8 means 20% probability
+                         const ratio = Math.random() > 0.8 ? (1.1 + Math.random() * 0.5) : (0.8 + Math.random() * 0.2);
                          actual = Math.floor(budget * ratio);
                     }
                     
@@ -1975,7 +1976,8 @@
                     let actual = 0;
                     const existingData = globalMatrixData[lineBody.id][group];
                     if (existingData && existingData.actualStartDate) {
-                         const ratio = Math.random() > 0.7 ? (1.1 + Math.random() * 0.5) : (0.8 + Math.random() * 0.2);
+                         // > 0.8 means 20% probability
+                         const ratio = Math.random() > 0.8 ? (1.1 + Math.random() * 0.5) : (0.8 + Math.random() * 0.2);
                          actual = Math.floor(budget * ratio);
                     }
                     
