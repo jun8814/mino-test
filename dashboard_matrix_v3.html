@@ -180,7 +180,7 @@
             color: #3370ff;
         }
         
-        .summary-cell .cost-over-budget {
+        .cost-over-budget {
             color: #dc2626 !important;
         }
 
@@ -731,7 +731,7 @@
             background: rgba(34, 197, 94, 0.12);
             padding: 2px 6px;
             border-radius: 4px;
-            animation: breathingGlow 2s ease-in-out infinite;
+            /* animation: breathingGlow 2s ease-in-out infinite; */
         }
         
         @keyframes breathingGlow {
@@ -778,6 +778,9 @@
             margin-right: 6px;
             animation: statusPulse 2s ease-in-out infinite;
         }
+        
+        .text-danger { color: #ef4444 !important; }
+        .bg-danger { background-color: #fee2e2 !important; color: #dc2626 !important; }
         
         .status-dot-gray { background: #6b7280; } /* 未开始 - 灰点 */
         .status-dot-green { background: #3470FF; } /* 进行中且未超期 - 绿点 */
@@ -1078,6 +1081,341 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        .config-btn-floating {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            /* background: #3b82f6; */
+            color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+        .config-btn-floating:hover {
+            transform: scale(1.1) rotate(90deg);
+            /* background: #2563eb; */
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+        }
+        .config-btn-floating svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        /* Custom Multi-select Dropdown */
+        .multi-select-container {
+            position: relative;
+            width: 100%;
+        }
+        .multi-select-trigger {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #1e293b;
+            min-height: 42px;
+        }
+        .multi-select-trigger:hover {
+            border-color: #cbd5e1;
+        }
+        .multi-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        .multi-select-dropdown.open {
+            display: block;
+        }
+        .multi-select-option {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        .multi-select-option:hover {
+            background: #f8fafc;
+        }
+        .multi-select-option.selected {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+        .multi-select-option input {
+            cursor: pointer;
+        }
+        
+        /* Config Modal Styles */
+        .config-section {
+            margin-bottom: 24px;
+        }
+        .config-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .config-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .config-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 6px 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .config-checkbox-label:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .config-checkbox-label.checked {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+        .config-checkbox-label input {
+            display: none;
+        }
+        .config-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background: #f8fafc;
+            color: #475569;
+        }
+        /* Config Table Styles */
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .config-table th, .config-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .config-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .config-table td {
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .config-table tr:hover {
+            background: #f1f5f9;
+        }
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            color: #3b82f6;
+            background: #e0f2fe;
+        }
+        .action-btn.delete:hover {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #3b82f6;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(16px);
+        }
+
+        /* Config Form Styles */
+        .config-form-group {
+            margin-bottom: 16px;
+        }
+        .config-form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .config-form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #1e293b;
+        }
+        .config-form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        .view-hidden {
+            display: none !important;
+        }
+        /* Sortable List Styles */
+        .sortable-list {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px;
+            background: #f8fafc;
+            min-height: 42px;
+            margin-top: 8px;
+        }
+        .sortable-item {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: move;
+            transition: all 0.2s;
+        }
+        .sortable-item:last-child {
+            margin-bottom: 0;
+        }
+        .sortable-item:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .sortable-item.dragging {
+            opacity: 0.5;
+            background: #e0f2fe;
+            border-color: #3b82f6;
+        }
+        .sortable-handle {
+            color: #94a3b8;
+            margin-right: 8px;
+            cursor: move;
+        }
+        .sortable-content {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+        .sortable-remove {
+            color: #ef4444;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .sortable-remove:hover {
+            background: #fee2e2;
+        }
+        
+        /* Hint text */
+        .config-hint {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1092,13 +1430,13 @@
                     <div class="header-control-group">
                         <span class="header-control-label">数据：</span>
                         <div class="data-mode-tabs">
-                            <button class="mode-tab active" data-mode="progress">进度</button>
-                            <button class="mode-tab" data-mode="cost">成本</button>
-                            <button class="mode-tab" data-mode="quality">质量</button>
+                            <button class="mode-tab" data-mode="progress" style="display: none !important;">进度</button>
+                            <button class="mode-tab active" data-mode="cost">成本</button>
+                            <button class="mode-tab" data-mode="quality" style="display: none !important;">质量</button>
                         </div>
                     </div>
                     <div class="header-control-group">
-                        <span class="header-control-label">状态：</span>
+                        <span class="header-control-label">项目状态：</span>
                         <div class="status-filters">
                             <button class="status-filter active" data-status="all">全部</button>
                             <button class="status-filter" data-status="inprogress">进行中</button>
@@ -1108,7 +1446,7 @@
                     <div class="control-group">
                         <span class="header-control-label">模糊：</span>
                         <div class="search-box">
-                            <input type="text" id="product-search" placeholder="项目 / 线体搜索" class="search-input">
+                            <input type="text" id="product-search" placeholder="产品搜索" class="search-input">
                         </div>
                     </div>
                  </div>
@@ -1162,9 +1500,13 @@
 
 
 
+    <button class="config-btn-floating" onclick="openConfigModal()" title="显示配置">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+    </button>
+
     <script>
         // 数据结构定义
-        let currentDataMode = 'progress'; // progress, cost, quality
+        let currentDataMode = 'cost'; // progress, cost, quality
         let currentStatusFilter = 'all'; // all, inprogress, completed
         let currentProductSearch = '';
         let currentOrgSearch = '';
@@ -1172,6 +1514,20 @@
         let organizationNavigationLevel = 0; // 组织导航层级
         let productNavigationPath = []; // 产品导航路径
         let organizationNavigationPath = []; // 组织导航路径
+        
+        // Configuration State
+        let configurationList = [
+            {
+                id: 'default',
+                name: '默认配置',
+                projectTypes: [], // Empty means all
+                orgDepts: [], // Empty means all
+                enabled: true
+            }
+        ];
+        
+        let visibleProjectTypes = []; 
+        let visibleOrgDepartments = [];
         // Removed pagination variables
         
         // 多层级组织结构
@@ -1211,15 +1567,15 @@
     0: {
         name: '项目',
         items: [
-            { id: '1', name: '项目A', fullName: '智能制造项目A' },
-            { id: '2', name: '项目B', fullName: '新能源项目B' },
-            { id: '3', name: '项目C', fullName: '数字化转型项目C' },
-            { id: '4', name: '项目D', fullName: '自动化升级项目D' },
-            { id: '5', name: '项目E', fullName: '工业4.0项目E' },
-            { id: '6', name: '项目F', fullName: '智慧工厂项目F' },
-            { id: '7', name: '项目G', fullName: '绿色制造项目G' },
-            { id: '8', name: '项目H', fullName: '绿色制造项目H' },
-            { id: '9', name: '项目I', fullName: '智能物流项目I' }
+            { id: '1', name: '项目A', fullName: '智能制造项目A', type: '量产项目' },
+            { id: '2', name: '项目B', fullName: '新能源项目B', type: '量产项目' },
+            { id: '3', name: '项目C', fullName: '数字化转型项目C', type: '量产项目' },
+            { id: '4', name: '项目D', fullName: '自动化升级项目D', type: '试制项目' },
+            { id: '5', name: '项目E', fullName: '工业4.0项目E', type: '试制项目' },
+            { id: '6', name: '项目F', fullName: '智慧工厂项目F', type: '试制项目' },
+            { id: '7', name: '项目G', fullName: '绿色制造项目G', type: '预研项目' },
+            { id: '8', name: '项目H', fullName: '绿色制造项目H', type: '预研项目' },
+            { id: '9', name: '项目I', fullName: '智能物流项目I', type: '预研项目' }
         ]
     },
     1: {
@@ -1468,164 +1824,335 @@
     }
 };
         
-        // 生成矩阵数据
-        function generateMatrixData() {
-            const matrixData = {};
-            const currentProducts = getCurrentProducts();
-            const currentOrganizations = getCurrentOrganizations();
+        let globalMatrixData = {};
+
+        // Helper to get all organizations
+        function getAllOrganizations() {
+            let allOrgs = new Set();
             
-            // 为当前显示的产品生成数据
-            currentProducts.forEach(product => {
-                matrixData[product.id] = {};
-                currentOrganizations.forEach((org, orgIndex) => {
-                    // 确保每个产品层级都有数据，每个组织都有数据
-                    let data;
-                    
-                    // 检查是否是主要部门（在orgWorkflow中定义的）
-                    const orgWorkflow = [
-                        '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
-                        '现场安装部', '现场调试部', 'misp&售后'
-                    ];
-                    
-                    if (orgWorkflow.includes(org)) {
-                        // 主要部门，使用原有逻辑
-                        data = generateCellData(product, org, orgIndex);
-                    } else {
-                        // 下级组织（组或岗位），使用新的生成逻辑
-                        data = generateSubOrganizationData(product, org, orgIndex);
+            // Level 0
+            if (organizationHierarchy[0] && organizationHierarchy[0].items) {
+                organizationHierarchy[0].items.forEach(org => allOrgs.add(org));
+            }
+            
+            // Level 1
+            if (organizationHierarchy[1] && organizationHierarchy[1].items) {
+                Object.values(organizationHierarchy[1].items).forEach(groups => {
+                    groups.forEach(group => allOrgs.add(group));
+                });
+            }
+            
+            // Level 2
+            if (organizationHierarchy[2] && organizationHierarchy[2].items) {
+                Object.values(organizationHierarchy[2].items).forEach(posts => {
+                    posts.forEach(post => allOrgs.add(post));
+                });
+            }
+            
+            return Array.from(allOrgs);
+        }
+
+        const postCostRanges = {
+            '机械工程部': [400, 1800],
+            '电气工程部': [700, 1200],
+            '加工制造部': [800, 1200],
+            '装配制造部': [700, 1200],
+            '现场安装部': [900, 1200],
+            '现场调试部': [800, 1200],
+            'misp&售后': [400, 700]
+        };
+
+        function getDepartmentForPost(postName) {
+            const orgHierarchy = organizationHierarchy[1].items; // Dept -> Groups
+            const positionHierarchy = organizationHierarchy[2].items; // Group -> Posts
+            
+            for (const [group, posts] of Object.entries(positionHierarchy)) {
+                if (posts && posts.includes(postName)) {
+                    // Found group, now find dept
+                    for (const [dept, groups] of Object.entries(orgHierarchy)) {
+                        if (groups.includes(group)) {
+                            return dept;
+                        }
+                    }
+                }
+            }
+            return '机械工程部'; // Default
+        }
+
+        function initializeGlobalData() {
+            console.log('Initializing global data...');
+            const allOrgs = getAllOrganizations();
+            const orgWorkflow = [
+                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
+                '现场安装部', '现场调试部', 'misp&售后'
+            ];
+
+            // 1. Top-Down Generation (Levels 0 to 5) for Dates and Status
+            // We still use generateCellData for dates/status, but we will overwrite costs for posts
+            for (let level = 0; level <= 5; level++) {
+                const products = productHierarchy[level].items;
+                products.forEach(product => {
+                    if (!globalMatrixData[product.id]) {
+                        globalMatrixData[product.id] = {};
                     }
                     
-                    matrixData[product.id][org] = data;
+                    allOrgs.forEach((org, orgIndex) => {
+                        let data;
+                        if (orgWorkflow.includes(org)) {
+                            const wfIndex = orgWorkflow.indexOf(org);
+                            data = generateCellData(product, org, wfIndex !== -1 ? wfIndex : 0);
+                        } else {
+                            data = generateSubOrganizationData(product, org, 0);
+                        }
+                        globalMatrixData[product.id][org] = data;
+                    });
+                });
+            }
+
+            // 2. Overwrite Costs for Posts (Top-Down from Line Body - Level 1)
+            // Get all posts
+            let allPosts = [];
+            if (organizationHierarchy[2] && organizationHierarchy[2].items) {
+                Object.values(organizationHierarchy[2].items).forEach(posts => {
+                    allPosts = allPosts.concat(posts);
+                });
+            }
+
+            // Get all groups without posts
+            let groupsWithoutPosts = [];
+            if (organizationHierarchy[1] && organizationHierarchy[1].items) {
+                Object.values(organizationHierarchy[1].items).forEach(groups => {
+                    groups.forEach(group => {
+                        // Check if this group has posts defined in Level 2
+                        if (!organizationHierarchy[2].items[group] || organizationHierarchy[2].items[group].length === 0) {
+                            groupsWithoutPosts.push(group);
+                        }
+                    });
+                });
+            }
+
+            // A. Generate Target Costs for Line Bodies (Level 1)
+            const lineBodies = productHierarchy[1].items;
+            lineBodies.forEach(lineBody => {
+                // 2.1 For Groups WITH Posts (sum of posts)
+                allPosts.forEach(post => {
+                    const dept = getDepartmentForPost(post);
+                    const range = postCostRanges[dept] || [400, 2000];
+                    const min = range[0];
+                    const max = range[1];
+                    
+                    // Generate Budget
+                    const budget = Math.floor(Math.random() * (max - min + 1)) + min;
+                    
+                    // Generate Actual (some > planned)
+                    // 30% chance of being higher
+                    let actual = 0;
+                    // Check if the post status is started (based on generated data)
+                    const existingData = globalMatrixData[lineBody.id][post];
+                    if (existingData && existingData.actualStartDate) {
+                         const ratio = Math.random() > 0.7 ? (1.1 + Math.random() * 0.5) : (0.8 + Math.random() * 0.2);
+                         actual = Math.floor(budget * ratio);
+                    }
+                    
+                    // Update Line Body Data
+                    if (globalMatrixData[lineBody.id][post]) {
+                        globalMatrixData[lineBody.id][post].budgetCost = budget;
+                        globalMatrixData[lineBody.id][post].actualCost = actual;
+                    }
+                });
+
+                // 2.2 For Groups WITHOUT Posts (direct assignment)
+                // Range: 9000 - 13000 minutes
+                groupsWithoutPosts.forEach(group => {
+                    const min = 6000;
+                    const max = 10500;
+                    
+                    // Generate Budget
+                    const budget = Math.floor(Math.random() * (max - min + 1)) + min;
+                    
+                    // Generate Actual
+                    let actual = 0;
+                    const existingData = globalMatrixData[lineBody.id][group];
+                    if (existingData && existingData.actualStartDate) {
+                         const ratio = Math.random() > 0.7 ? (1.1 + Math.random() * 0.5) : (0.8 + Math.random() * 0.2);
+                         actual = Math.floor(budget * ratio);
+                    }
+                    
+                    if (globalMatrixData[lineBody.id][group]) {
+                        globalMatrixData[lineBody.id][group].budgetCost = budget;
+                        globalMatrixData[lineBody.id][group].actualCost = actual;
+                    }
+                });
+
+                // B. Distribute to children recursively
+                // Distribute post costs
+                distributeCostsToChildren(lineBody, allPosts, 1);
+                // Distribute group costs (for groups without posts)
+                distributeCostsToChildren(lineBody, groupsWithoutPosts, 1);
+            });
+
+            // 3. Bottom-Up Aggregation (Levels 5 down to 0) 
+            // This will ensure Level 0 (Project) is sum of Line Bodies, 
+            // and Org Levels 0/1 are sums of Posts.
+            aggregateCosts(allOrgs);
+            console.log('Global data initialized.');
+        }
+
+        function distributeCostsToChildren(parentProduct, posts, parentLevel) {
+            const childLevel = parentLevel + 1;
+            if (!productHierarchy[childLevel]) return;
+            
+            const children = productHierarchy[childLevel].items.filter(p => p.parentId === parentProduct.id);
+            if (children.length === 0) return;
+
+            posts.forEach(post => {
+                const parentData = globalMatrixData[parentProduct.id][post];
+                if (!parentData) return;
+
+                const parentBudget = parentData.budgetCost || 0;
+                const parentActual = parentData.actualCost || 0;
+
+                // Generate random weights for children
+                const weights = children.map(() => Math.random() * 0.5 + 0.5); // 0.5 to 1.0
+                const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+                let allocatedBudget = 0;
+                let allocatedActual = 0;
+
+                children.forEach((child, index) => {
+                    // Last child gets the remainder to avoid rounding errors
+                    let childBudget, childActual;
+                    
+                    if (index === children.length - 1) {
+                        childBudget = parentBudget - allocatedBudget;
+                        childActual = parentActual - allocatedActual;
+                    } else {
+                        childBudget = Math.floor(parentBudget * (weights[index] / totalWeight));
+                        childActual = Math.floor(parentActual * (weights[index] / totalWeight));
+                    }
+                    
+                    allocatedBudget += childBudget;
+                    allocatedActual += childActual;
+
+                    if (globalMatrixData[child.id][post]) {
+                        globalMatrixData[child.id][post].budgetCost = childBudget;
+                        globalMatrixData[child.id][post].actualCost = childActual;
+                    }
                 });
             });
-            
-            // 如果当前是项目层级，还需要为所有线体生成数据，以便下钻时有数据
-            if (productNavigationLevel === 0) {
-                const allLineItems = productHierarchy[1].items;
-                allLineItems.forEach(lineItem => {
-                    if (!matrixData[lineItem.id]) {
-                        matrixData[lineItem.id] = {};
-                        currentOrganizations.forEach((org, orgIndex) => {
-                            let data;
-                            const orgWorkflow = [
-                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
-                                '现场安装部', '现场调试部', 'misp&售后'
-                            ];
-                            
-                            if (orgWorkflow.includes(org)) {
-                                data = generateCellData(lineItem, org, orgIndex);
-                            } else {
-                                data = generateSubOrganizationData(lineItem, org, orgIndex);
-                            }
-                            
-                            matrixData[lineItem.id][org] = data;
-                        });
-                    }
-                });
-            }
-            
-            // 如果当前是线体层级，还需要为所有区域生成数据
-            if (productNavigationLevel === 1) {
-                const allAreaItems = productHierarchy[2].items;
-                allAreaItems.forEach(areaItem => {
-                    if (!matrixData[areaItem.id]) {
-                        matrixData[areaItem.id] = {};
-                        currentOrganizations.forEach((org, orgIndex) => {
-                            let data;
-                            const orgWorkflow = [
-                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
-                                '现场安装部', '现场调试部', 'misp&售后'
-                            ];
-                            
-                            if (orgWorkflow.includes(org)) {
-                                data = generateCellData(areaItem, org, orgIndex);
-                            } else {
-                                data = generateSubOrganizationData(areaItem, org, orgIndex);
-                            }
-                            
-                            matrixData[areaItem.id][org] = data;
-                        });
-                    }
-                });
-            }
-            
-            // 如果当前是区域层级，还需要为所有工位生成数据
-            if (productNavigationLevel === 2) {
-                const allWorkstationItems = productHierarchy[3].items;
-                allWorkstationItems.forEach(workstationItem => {
-                    if (!matrixData[workstationItem.id]) {
-                        matrixData[workstationItem.id] = {};
-                        currentOrganizations.forEach((org, orgIndex) => {
-                            let data;
-                            const orgWorkflow = [
-                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
-                                '现场安装部', '现场调试部', 'misp&售后'
-                            ];
-                            
-                            if (orgWorkflow.includes(org)) {
-                                data = generateCellData(workstationItem, org, orgIndex);
-                            } else {
-                                data = generateSubOrganizationData(workstationItem, org, orgIndex);
-                            }
-                            
-                            matrixData[workstationItem.id][org] = data;
-                        });
-                    }
-                });
-            }
-            
-            // 如果当前是工位层级，还需要为所有设备生成数据
-            if (productNavigationLevel === 3) {
-                const allEquipmentItems = productHierarchy[4].items;
-                allEquipmentItems.forEach(equipmentItem => {
-                    if (!matrixData[equipmentItem.id]) {
-                        matrixData[equipmentItem.id] = {};
-                        currentOrganizations.forEach((org, orgIndex) => {
-                            let data;
-                            const orgWorkflow = [
-                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
-                                '现场安装部', '现场调试部', 'misp&售后'
-                            ];
-                            
-                            if (orgWorkflow.includes(org)) {
-                                data = generateCellData(equipmentItem, org, orgIndex);
-                            } else {
-                                data = generateSubOrganizationData(equipmentItem, org, orgIndex);
-                            }
-                            
-                            matrixData[equipmentItem.id][org] = data;
-                        });
-                    }
-                });
-            }
-            
-            // 如果当前是设备层级，还需要为所有部件生成数据
-            if (productNavigationLevel === 4) {
-                const allComponentItems = productHierarchy[5].items;
-                allComponentItems.forEach(componentItem => {
-                    if (!matrixData[componentItem.id]) {
-                        matrixData[componentItem.id] = {};
-                        currentOrganizations.forEach((org, orgIndex) => {
-                            let data;
-                            const orgWorkflow = [
-                                '机械工程部', '电气工程部', '加工制造部', '装配制造部', 
-                                '现场安装部', '现场调试部', 'misp&售后'
-                            ];
-                            
-                            if (orgWorkflow.includes(org)) {
-                                data = generateCellData(componentItem, org, orgIndex);
-                            } else {
-                                data = generateSubOrganizationData(componentItem, org, orgIndex);
-                            }
-                            
-                            matrixData[componentItem.id][org] = data;
-                        });
-                    }
-                });
-            }
-            
-            return matrixData;
+
+            // Recurse for each child
+            children.forEach(child => {
+                distributeCostsToChildren(child, posts, childLevel);
+            });
         }
+
+        function aggregateCosts(allOrgs) {
+            // Iterate from Level 5 down to 0
+            for (let level = 5; level >= 0; level--) {
+                const products = productHierarchy[level].items;
+                
+                products.forEach(product => {
+                    // Check if product has children
+                    let children = [];
+                    if (level < 5 && productHierarchy[level + 1]) {
+                        children = productHierarchy[level + 1].items.filter(p => p.parentId === product.id);
+                    }
+
+                    if (children.length > 0) {
+                        // Aggregate from children
+                        allOrgs.forEach(org => {
+                            let totalBudget = 0;
+                            let totalActual = 0;
+                            
+                            children.forEach(child => {
+                                const childData = globalMatrixData[child.id][org];
+                                if (childData) {
+                                    totalBudget += childData.budgetCost || 0;
+                                    totalActual += childData.actualCost || 0;
+                                }
+                            });
+
+                            // Update self
+                            if (globalMatrixData[product.id][org]) {
+                                globalMatrixData[product.id][org].budgetCost = totalBudget;
+                                globalMatrixData[product.id][org].actualCost = totalActual;
+                            }
+                        });
+                    }
+                    // Else (Leaf node): Keep generated random cost
+                    
+                    // After aggregation (or for leaf nodes), check if we need to aggregate sub-organization costs
+                    
+                    // 1. Groups Aggregation: Group value should be sum of its Posts (Level 2 -> Level 1)
+                    if (organizationHierarchy[1] && organizationHierarchy[1].items) {
+                        const allGroups = organizationHierarchy[1].items;
+                        // Iterate through Departments to get Groups
+                        Object.values(allGroups).forEach(groupList => {
+                            groupList.forEach(group => {
+                                // Check if this Group has children Posts
+                                const posts = organizationHierarchy[2].items[group];
+                                if (posts && posts.length > 0) {
+                                    let groupBudget = 0;
+                                    let groupActual = 0;
+                                    
+                                    posts.forEach(post => {
+                                        const postData = globalMatrixData[product.id][post];
+                                        if (postData) {
+                                            groupBudget += postData.budgetCost || 0;
+                                            groupActual += postData.actualCost || 0;
+                                        }
+                                    });
+                                    
+                                    // Update the Group data for this product
+                                    if (globalMatrixData[product.id][group]) {
+                                        globalMatrixData[product.id][group].budgetCost = groupBudget;
+                                        globalMatrixData[product.id][group].actualCost = groupActual;
+                                    }
+                                }
+                            });
+                        });
+                    }
+
+                    // 2. Department Aggregation: Department value should be sum of its Groups (Level 1 -> Level 0)
+                    if (organizationHierarchy[0] && organizationHierarchy[0].items) {
+                        const topOrgs = organizationHierarchy[0].items;
+                         topOrgs.forEach(topOrg => {
+                             // Check if this topOrg has children groups
+                             const groups = organizationHierarchy[1].items[topOrg];
+                             if (groups && groups.length > 0) {
+                                 let deptBudget = 0;
+                                 let deptActual = 0;
+                                 
+                                 groups.forEach(group => {
+                                     const groupData = globalMatrixData[product.id][group];
+                                     if (groupData) {
+                                         deptBudget += groupData.budgetCost || 0;
+                                         deptActual += groupData.actualCost || 0;
+                                     }
+                                 });
+                                 
+                                 // Update the topOrg data for this product
+                                 if (globalMatrixData[product.id][topOrg]) {
+                                     globalMatrixData[product.id][topOrg].budgetCost = deptBudget;
+                                     globalMatrixData[product.id][topOrg].actualCost = deptActual;
+                                 }
+                             }
+                         });
+                    }
+                });
+            }
+        }
+
+        // 生成矩阵数据
+        function generateMatrixData() {
+            if (Object.keys(globalMatrixData).length === 0) {
+                initializeGlobalData();
+            }
+            return globalMatrixData;
+        }
+
+
         
         function generateCellData(product, orgName, orgIndex) {
             // 使用产品ID生成确定性的数据
@@ -1691,7 +2218,7 @@
             } else {
                 // 顶级产品（项目），使用原有逻辑
                 const baseYear = 2025;
-                const baseMonth = 2 + (productSeed % 5);
+                const baseMonth = 7 + (productSeed % 5);
                 const projectStartDay = 1 + (productSeed % 30); // 1-30号之间开始
                 
                 // 计算当前组织的计划开始时间
@@ -1812,7 +2339,13 @@
             let actualCost = 0;
             if (actualStartDate) {
                 // 增加超预算的可能性：60%-180%的范围，约50%概率超预算20%以上
-                const costRatio = 0.6 + ((productSeed + currentOrgIndex) % 120) / 100; // 60%-180%
+                let costRatio = 0.6 + ((productSeed + currentOrgIndex) % 120) / 100; // 60%-180%
+                
+                // 特殊处理：项目A (id='1') 强制预实比 > 100%
+                if (product.id === '1' || product.parentId === '1' || (product.parentId && product.parentId.startsWith('1'))) {
+                    costRatio = 1.5 + (currentOrgIndex * 0.1); // 150% + 
+                }
+                
                 actualCost = Math.floor(budgetCost * costRatio);
             }
             
@@ -2063,7 +2596,7 @@
                 
                 // 项目基准开始时间（基于产品ID确定）
                 const baseYear = 2025;
-                const baseMonth = 1; // 1月开始
+                const baseMonth = 4; // 1月开始
                 const projectStartDay = 1 + (productSeed % 15); // 1-15号之间开始
                 
                 // 计算当前组织的计划开始时间
@@ -2413,17 +2946,25 @@
 
                 case 'cost':
                     // Summary: Estimated (Budget) / Actual
+                    // For cost mode, the summary column should be the sum of all visible organization costs for this product
+                    // However, if we are at Department Level (0), the row contains 'Mechanical', 'Electrical', etc.
+                    // So we should sum those up.
+                    // But wait, the `productData` array passed here contains data for `currentOrganizations`.
+                    // If `currentOrganizations` are Departments, it sums Departments.
+                    // If `currentOrganizations` are Groups, it sums Groups.
+                    // So this logic is correct for "Horizontal Summary" (Total Cost for this Product Row).
+                    
                     const totalBudget = productData.reduce((sum, d) => sum + d.budgetCost, 0);
                     const totalActual = productData.reduce((sum, d) => sum + d.actualCost, 0);
                     
                     // Check if over budget
-                    const isOverBudget = totalActual > 0 && totalBudget > 0 && (totalActual / totalBudget) > 1.2;
+                    const isOverBudget = totalActual > totalBudget;
                     const overBudgetClass = isOverBudget ? 'cost-over-budget' : '';
                     
                     return `
                         <div class="data-cell-content">
-                            <div class="data-value">${totalBudget}</div>
-                            <div class="data-secondary ${overBudgetClass}">${totalActual}</div>
+                            <div class="data-value">${totalBudget.toLocaleString()}</div>
+                            <div class="data-secondary ${overBudgetClass}">${totalActual.toLocaleString()}</div>
                         </div>
                     `;
 
@@ -2464,9 +3005,21 @@
                             day: '2-digit'
                         }).replace(/\//g, '/');
                         statusClass = 'status-completed';
+                        
+                        // 1. 实际完成日期大于计划完成日期，文本标红
+                        // if (data.actualEndDate > data.plannedEndDate) {
+                        //     statusClass += ' text-danger';
+                        // }
+                        
                     } else if (data.actualStartDate) {
                         actualEndDate = '进行中';
                         statusClass = 'status-inprogress';
+                        
+                        // 2. 没有实际完成日期的且进行中的，如果超期，背景颜色要变红
+                        // "没有实际完成日期" is implicit here (else branch of actualEndDate)
+                        if (new Date() > data.plannedEndDate) {
+                            statusClass += ' bg-danger';
+                        }
                     } else {
                         actualEndDate = '未开始';
                         statusClass = 'status-notstarted';
@@ -2480,15 +3033,14 @@
                     `;
                     
                 case 'cost':
-                    // 判断是否超预算20%以上
-                    const isOverBudget20 = data.actualCost > 0 && data.budgetCost > 0 && 
-                                          (data.actualCost / data.budgetCost) > 1.2;
-                    const overBudgetClass = isOverBudget20 ? 'cost-over-budget' : '';
+                    // 判断是否超预算
+                    const isOverBudget = data.actualCost > data.budgetCost;
+                    const overBudgetClass = isOverBudget ? 'cost-over-budget' : '';
                     
                     return `
                         <div class="data-cell-content">
-                        <div class="data-value">${data.budgetCost}</div>
-                        <div class="data-secondary ${overBudgetClass}">${data.actualCost}</div>
+                        <div class="data-value">${data.budgetCost.toLocaleString()}</div>
+                        <div class="data-secondary ${overBudgetClass}">${data.actualCost.toLocaleString()}</div>
                         </div>
                     `;
                     
@@ -2650,17 +3202,31 @@
         
         // 筛选和搜索
         function shouldShowProduct(product) {
-            // if (currentProductSearch && !product.name.toLowerCase().includes(currentProductSearch.toLowerCase()) 
-            //     && !product.fullName.toLowerCase().includes(currentProductSearch.toLowerCase())) {
-            //     return false;
-            // }
+            // Only filter at root level (Projects)
+            if (productNavigationLevel === 0 && visibleProjectTypes.length > 0) {
+                const type = product.type || '未分类';
+                if (!visibleProjectTypes.includes(type)) {
+                    return false;
+                }
+            }
+            
+            if (currentProductSearch) {
+                const searchLower = currentProductSearch.toLowerCase();
+                if (!product.name.toLowerCase().includes(searchLower) 
+                    && !product.fullName.toLowerCase().includes(searchLower)) {
+                    return false;
+                }
+            }
             return true;
         }
         
         function shouldShowOrganization(org) {
-            // if (currentOrgSearch && !org.toLowerCase().includes(currentOrgSearch.toLowerCase())) {
-            //     return false;
-            // }
+            // Only filter at root level (Departments)
+            if (organizationNavigationLevel === 0 && visibleOrgDepartments.length > 0) {
+                if (!visibleOrgDepartments.includes(org)) {
+                    return false;
+                }
+            }
             return true;
         }
         
@@ -2810,6 +3376,442 @@
         
 
         
+        
+        // Configuration Logic
+        function initConfig() {
+            // Initialize defaults if needed
+            // Default config is already in configurationList
+            applyConfigs();
+        }
+
+        function openConfigModal() {
+            const modal = document.getElementById('config-modal-overlay');
+            if (modal) {
+                renderConfigTable();
+                showConfigListView();
+                modal.style.display = 'flex';
+                // Trigger reflow
+                void modal.offsetWidth;
+                modal.classList.add('show');
+                modal.style.opacity = '1';
+            }
+        }
+
+        function showConfigListView() {
+            document.getElementById('config-list-view').classList.remove('view-hidden');
+            document.getElementById('config-edit-view').classList.add('view-hidden');
+            document.getElementById('config-modal-title').textContent = '显示配置管理';
+            document.getElementById('btn-add-config').classList.remove('view-hidden');
+        }
+
+        function showConfigEditView(isEdit) {
+            document.getElementById('config-list-view').classList.add('view-hidden');
+            document.getElementById('config-edit-view').classList.remove('view-hidden');
+            document.getElementById('config-modal-title').textContent = isEdit ? '编辑配置' : '新增配置';
+            document.getElementById('btn-add-config').classList.add('view-hidden');
+        }
+
+        function createMultiSelectHTML(id, options, selectedValues, onSelectCallback) {
+            const selectedCount = selectedValues.length;
+            const displayText = selectedCount === 0 ? '请选择...' : 
+                               (selectedCount === options.length ? '全部已选' : `已选择 ${selectedCount} 项`);
+            
+            const optionsHTML = options.map(opt => `
+                <div class="multi-select-option ${selectedValues.includes(opt) ? 'selected' : ''}" onclick="toggleMultiSelectOption(this, '${id}', '${opt}'${onSelectCallback ? `, ${onSelectCallback}` : ''})">
+                    <input type="checkbox" ${selectedValues.includes(opt) ? 'checked' : ''}>
+                    <span>${opt}</span>
+                </div>
+            `).join('');
+
+            return `
+                <div class="multi-select-container" id="ms-container-${id}">
+                    <div class="multi-select-trigger" onclick="toggleMultiSelectDropdown('${id}')">
+                        <span class="selected-text" id="ms-text-${id}">${displayText}</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="multi-select-dropdown" id="ms-dropdown-${id}">
+                        ${optionsHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleMultiSelectDropdown(id) {
+            const dropdown = document.getElementById(`ms-dropdown-${id}`);
+            const isOpen = dropdown.classList.contains('open');
+            
+            // Close all others first
+            document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
+            
+            if (!isOpen) {
+                dropdown.classList.add('open');
+            }
+            
+            // Prevent bubbling to document click
+            event.stopPropagation();
+        }
+
+        function closeDropdownsOnClickOutside(event) {
+            if (!event.target.closest('.multi-select-container')) {
+                document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
+            }
+        }
+
+        function toggleMultiSelectOption(optionDiv, id, value, callback) {
+            const checkbox = optionDiv.querySelector('input');
+            const isChecked = !checkbox.checked; // Toggle state
+            
+            checkbox.checked = isChecked;
+            if (isChecked) {
+                optionDiv.classList.add('selected');
+            } else {
+                optionDiv.classList.remove('selected');
+            }
+            
+            // Update Trigger Text
+            updateMultiSelectText(id);
+            
+            // Trigger Callback if provided
+            if (callback && typeof callback === 'function') {
+                callback(id, value, isChecked);
+            }
+            
+            // Prevent closing dropdown
+            event.stopPropagation();
+        }
+
+        function updateMultiSelectText(id) {
+            const container = document.getElementById(`ms-container-${id}`);
+            const checkedInputs = container.querySelectorAll('input:checked');
+            const totalOptions = container.querySelectorAll('.multi-select-option').length;
+            const count = checkedInputs.length;
+            
+            const textSpan = document.getElementById(`ms-text-${id}`);
+            if (count === 0) {
+                textSpan.textContent = '请选择...';
+            } else if (count === totalOptions) {
+                textSpan.textContent = '全部已选';
+            } else {
+                textSpan.textContent = `已选择 ${count} 项`;
+            }
+        }
+        
+        // Sortable Logic
+        function renderSortableOrgList(selectedOrgs) {
+            const container = document.getElementById('edit-org-depts-sortable');
+            if (!container) return;
+            
+            container.innerHTML = selectedOrgs.map(org => `
+                <div class="sortable-item" draggable="true" data-value="${org}">
+                    <div style="display: flex; align-items: center;">
+                        <span class="sortable-handle">☰</span>
+                        <span class="sortable-content">${org}</span>
+                    </div>
+                    <div class="sortable-remove" onclick="removeSortableItem('${org}')" title="移除">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                </div>
+            `).join('');
+            
+            initSortable(container);
+        }
+        
+        function removeSortableItem(value) {
+            // Uncheck in dropdown
+            const optionDivs = document.querySelectorAll('#ms-dropdown-edit-org-depts .multi-select-option');
+            optionDivs.forEach(div => {
+                const span = div.querySelector('span');
+                if (span && span.textContent === value) {
+                    const checkbox = div.querySelector('input');
+                    if (checkbox.checked) {
+                        checkbox.checked = false;
+                        div.classList.remove('selected');
+                    }
+                }
+            });
+            updateMultiSelectText('edit-org-depts');
+            
+            // Update sortable list
+            const currentOrgs = getSortableValues();
+            const newOrgs = currentOrgs.filter(o => o !== value);
+            renderSortableOrgList(newOrgs);
+        }
+        
+        function onOrgSelectChange(id, value, isChecked) {
+            const currentOrgs = getSortableValues();
+            
+            if (isChecked) {
+                // Add to end
+                if (!currentOrgs.includes(value)) {
+                    currentOrgs.push(value);
+                }
+            } else {
+                // Remove
+                const index = currentOrgs.indexOf(value);
+                if (index > -1) {
+                    currentOrgs.splice(index, 1);
+                }
+            }
+            
+            renderSortableOrgList(currentOrgs);
+        }
+        
+        function getSortableValues() {
+            const container = document.getElementById('edit-org-depts-sortable');
+            if (!container) return [];
+            return Array.from(container.querySelectorAll('.sortable-item')).map(item => item.dataset.value);
+        }
+        
+        function initSortable(container) {
+            let draggedItem = null;
+            
+            container.querySelectorAll('.sortable-item').forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedItem = item;
+                    setTimeout(() => item.classList.add('dragging'), 0);
+                });
+                
+                item.addEventListener('dragend', function() {
+                    draggedItem = null;
+                    item.classList.remove('dragging');
+                });
+                
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(container, e.clientY);
+                    if (afterElement == null) {
+                        container.appendChild(draggedItem);
+                    } else {
+                        container.insertBefore(draggedItem, afterElement);
+                    }
+                });
+            });
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.sortable-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function renderConfigTable() {
+            const tbody = document.getElementById('config-table-body');
+            tbody.innerHTML = configurationList.map(config => {
+                const typesText = config.projectTypes.length > 0 ? 
+                                 (config.projectTypes.length > 3 ? `${config.projectTypes.slice(0, 3).join(', ')}...` : config.projectTypes.join(', ')) 
+                                 : '全部';
+                const orgsText = config.orgDepts.length > 0 ? 
+                                (config.orgDepts.length > 3 ? `${config.orgDepts.slice(0, 3).join(', ')}...` : config.orgDepts.join(', ')) 
+                                : '全部';
+                
+                return `
+                    <tr>
+                        <td>${config.name}</td>
+                        <td title="${config.projectTypes.join(', ')}">${typesText}</td>
+                        <td title="${config.orgDepts.join(', ')}">${orgsText}</td>
+                        <td>
+                            <label class="toggle-switch">
+                                <input type="checkbox" ${config.enabled ? 'checked' : ''} onchange="toggleConfigEnabled('${config.id}')">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="openEditConfigForm('${config.id}')" title="编辑">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteConfig('${config.id}')" title="删除">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openAddConfigForm() {
+            // Reset form
+            document.getElementById('edit-config-id').value = '';
+            document.getElementById('edit-config-name').value = '';
+            document.getElementById('edit-config-enabled').checked = true;
+            
+            // Render Dropdowns with empty selection (or all selected?)
+            // Let's assume default is empty means ALL or NONE? 
+            // In initConfig, empty meant ALL. Let's keep empty selection visually, but logic handles it.
+            // Wait, if empty means all, then "Please select..." implies none selected.
+            // Let's pre-select nothing.
+            
+            const allTypes = [...new Set(productHierarchy[0].items.map(p => p.type || '未分类'))];
+            document.getElementById('edit-project-types').innerHTML = createMultiSelectHTML('edit-project-types', allTypes, []);
+            
+            const allDepts = organizationHierarchy[0].items;
+            document.getElementById('edit-org-depts').innerHTML = createMultiSelectHTML('edit-org-depts', allDepts, []);
+            
+            showConfigEditView(false);
+            
+             // Add event listeners for closing dropdowns when clicking outside
+             document.addEventListener('click', closeDropdownsOnClickOutside);
+        }
+
+        function openEditConfigForm(id) {
+            const config = configurationList.find(c => c.id === id);
+            if (!config) return;
+
+            document.getElementById('edit-config-id').value = config.id;
+            document.getElementById('edit-config-name').value = config.name;
+            document.getElementById('edit-config-enabled').checked = config.enabled;
+            
+            const allTypes = [...new Set(productHierarchy[0].items.map(p => p.type || '未分类'))];
+            // If empty in config, it means ALL were implicitly selected or explicitly none?
+            // The previous logic: "Empty means all" in initialization.
+            // But here in UI, if it's empty, we should show empty.
+            // Let's stick to explicit selection. If config.projectTypes is empty, show empty.
+            // BUT, if user saves empty, does it mean ALL? 
+            // Let's change logic: Empty means None. User must select ALL if they want ALL.
+            // Or better: Let's fill the config with ALL on init.
+            
+            document.getElementById('edit-project-types').innerHTML = createMultiSelectHTML('edit-project-types', allTypes, config.projectTypes);
+            
+            const allDepts = organizationHierarchy[0].items;
+            document.getElementById('edit-org-depts').innerHTML = createMultiSelectHTML('edit-org-depts', allDepts, config.orgDepts);
+            
+            showConfigEditView(true);
+            
+             // Add event listeners for closing dropdowns when clicking outside
+             document.addEventListener('click', closeDropdownsOnClickOutside);
+        }
+
+        function saveConfigItem() {
+            const id = document.getElementById('edit-config-id').value;
+            const name = document.getElementById('edit-config-name').value.trim();
+            if (!name) {
+                alert('请输入配置名称');
+                return;
+            }
+            
+            const enabled = document.getElementById('edit-config-enabled').checked;
+            
+            // Get selected values from dropdowns
+            const projectTypes = Array.from(document.querySelectorAll('#ms-dropdown-edit-project-types .multi-select-option'))
+                .filter(opt => opt.querySelector('input').checked)
+                .map(opt => opt.querySelector('span').textContent);
+                
+            const orgDepts = Array.from(document.querySelectorAll('#ms-dropdown-edit-org-depts .multi-select-option'))
+                .filter(opt => opt.querySelector('input').checked)
+                .map(opt => opt.querySelector('span').textContent);
+
+            if (id) {
+                // Edit
+                const index = configurationList.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    configurationList[index] = { ...configurationList[index], name, projectTypes, orgDepts, enabled };
+                }
+            } else {
+                // Add
+                const newId = 'config_' + Date.now();
+                configurationList.push({ id: newId, name, projectTypes, orgDepts, enabled });
+            }
+            
+            // Return to list view
+            renderConfigTable();
+            showConfigListView();
+            
+            // Remove dropdown listener to avoid duplicates
+            document.removeEventListener('click', closeDropdownsOnClickOutside);
+        }
+
+        function cancelEditConfig() {
+            showConfigListView();
+             document.removeEventListener('click', closeDropdownsOnClickOutside);
+        }
+
+        function deleteConfig(id) {
+            if (confirm('确定要删除此配置吗？')) {
+                configurationList = configurationList.filter(c => c.id !== id);
+                renderConfigTable();
+            }
+        }
+
+        function toggleConfigEnabled(id) {
+            const config = configurationList.find(c => c.id === id);
+            if (config) {
+                config.enabled = !config.enabled; // The checkbox change event already toggles UI, but we update state here.
+                // Wait, onchange fires after change. The UI is already updated.
+                // We just need to sync state.
+                const checkbox = event.target;
+                config.enabled = checkbox.checked;
+            }
+        }
+
+        function applyConfigs() {
+            // Calculate Union of all enabled configs
+            const enabledConfigs = configurationList.filter(c => c.enabled);
+            
+            if (enabledConfigs.length === 0) {
+                // If no configs enabled, show ALL? Or show NOTHING?
+                // Usually "No filters applied" means "Show All".
+                // Let's go with Show All.
+                const allTypes = [...new Set(productHierarchy[0].items.map(p => p.type || '未分类'))];
+                visibleProjectTypes = [...allTypes];
+                
+                const allDepts = organizationHierarchy[0].items;
+                visibleOrgDepartments = [...allDepts];
+            } else {
+                let typesSet = new Set();
+                let deptsSet = new Set();
+                
+                enabledConfigs.forEach(config => {
+                    // If a config has empty types, does it mean ALL or NONE?
+                    // In UI we decided explicit selection. So empty means none.
+                    // But if a user creates a config "Show Org A", they might want ALL projects.
+                    // This ambiguity exists.
+                    // Let's assume: Empty list in config = Select None.
+                    config.projectTypes.forEach(t => typesSet.add(t));
+                    config.orgDepts.forEach(d => deptsSet.add(d));
+                });
+                
+                visibleProjectTypes = Array.from(typesSet);
+                visibleOrgDepartments = Array.from(deptsSet);
+            }
+            
+            // Close modal
+            const modal = document.getElementById('config-modal-overlay');
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+            }
+            
+            renderMatrix();
+        }
+
+        function closeConfigModal(event) {
+            // ... existing logic ...
+            if (event && event.target.id !== 'config-modal-overlay' && !event.target.classList.contains('btn-secondary')) {
+                if (event.target.closest('.modal-content')) return;
+            }
+            
+            const modal = document.getElementById('config-modal-overlay');
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // ... existing helper functions ...
+
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             // 绑定数据模式切换
@@ -2823,8 +3825,12 @@
             });
             
             // 绑定搜索
-            // document.getElementById('product-search').addEventListener('input', (e) => updateProductSearch(e.target.value));
-            // document.getElementById('org-search').addEventListener('input', (e) => updateOrgSearch(e.target.value));
+            const searchInput = document.getElementById('product-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => updateProductSearch(e.target.value));
+            }
+
+            initConfig();
             
 
             
@@ -2858,6 +3864,82 @@
             }
         }
     </script>
+    <!-- 配置模态框 -->
+    <div class="modal-overlay" id="config-modal-overlay" onclick="closeConfigModal(event)">
+        <div class="modal" style="min-width: 800px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="modal-title" id="config-modal-title">显示配置管理</h2>
+                <button class="btn-primary" id="btn-add-config" onclick="openAddConfigForm()" style="font-size: 0.85rem; padding: 6px 12px;">+ 新增配置</button>
+            </div>
+            <div class="modal-content">
+                
+                <!-- 列表视图 -->
+                <div id="config-list-view">
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%;">配置名称</th>
+                                <th style="width: 25%;">项目类型</th>
+                                <th style="width: 25%;">组织部门</th>
+                                <th style="width: 15%;">是否启用</th>
+                                <th style="width: 15%;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="config-table-body">
+                            <!-- 动态生成 -->
+                        </tbody>
+                    </table>
+                    <div class="config-actions">
+                        <button class="btn-secondary" onclick="closeConfigModal()">关闭</button>
+                        <button class="btn-primary" onclick="applyConfigs()">应用更改</button>
+                    </div>
+                </div>
+
+                <!-- 编辑视图 (默认隐藏) -->
+                <div id="config-edit-view" class="view-hidden">
+                    <input type="hidden" id="edit-config-id">
+                    
+                    <div class="config-form-group">
+                        <label class="config-form-label">配置名称</label>
+                        <input type="text" id="edit-config-name" class="config-form-input" placeholder="请输入配置名称">
+                    </div>
+                    
+                    <div class="config-form-group">
+                        <label class="config-form-label">项目类型</label>
+                        <div id="edit-project-types">
+                            <!-- Dropdown container -->
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-group">
+                        <label class="config-form-label">组织部门 (拖拽可排序)</label>
+                        <div id="edit-org-depts">
+                            <!-- Dropdown container -->
+                        </div>
+                        <div class="config-hint">已选部门（按显示顺序排列）：</div>
+                        <div id="edit-org-depts-sortable" class="sortable-list">
+                            <!-- Sortable items -->
+                        </div>
+                    </div>
+                    
+                    <div class="config-form-group">
+                        <label class="config-form-label">是否启用</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="edit-config-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="config-actions">
+                        <button class="btn-secondary" onclick="cancelEditConfig()">取消</button>
+                        <button class="btn-primary" onclick="saveConfigItem()">保存</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- 模态框结构 -->
     <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
         <div class="modal">
