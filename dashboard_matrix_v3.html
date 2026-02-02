@@ -1431,9 +1431,9 @@
                     <div class="header-control-group">
                         <span class="header-control-label">数据：</span>
                         <div class="data-mode-tabs">
-                            <button class="mode-tab" data-mode="progress" style="display: none !important;">进度</button>
+                            <button class="mode-tab" data-mode="progress">进度</button>
                             <button class="mode-tab active" data-mode="cost">成本</button>
-                            <button class="mode-tab" data-mode="quality" style="display: none !important;">质量</button>
+                            <button class="mode-tab" data-mode="quality">质量</button>
                         </div>
                     </div>
                     <div class="header-control-group">
@@ -2275,12 +2275,14 @@
              } else {
                 // 顶级产品使用原有的状态生成逻辑
                 if (currentOrgIndex <= 1) { // 机械工程部、电气工程部
-                    if (statusSeed < 80) { // 80%概率已开始
+                    if (statusSeed < 70) { // 70%概率已开始
                         const startDelay = ((productSeed + currentOrgIndex * 3) % 12) - 5; // -5到6天延迟
                         actualStartDate = new Date(plannedStartDate.getTime() + startDelay * 24 * 60 * 60 * 1000);
                         
                         if (statusSeed < 50) { // 50%概率已完成
-                            const completionDelay = ((productSeed + currentOrgIndex * 5) % 15) - 6; // -6到8天延迟
+                            // Old: ((productSeed + currentOrgIndex * 5) % 15) - 6; // -6 to 8. Prob > 0: 8/15 (~53%)
+                            // New: ((productSeed + currentOrgIndex * 5) % 15) - 10; // -10 to 4. Prob > 0: 4/15 (~26%)
+                            const completionDelay = ((productSeed + currentOrgIndex * 5) % 15) - 10; 
                             actualEndDate = new Date(plannedEndDate.getTime() + completionDelay * 24 * 60 * 60 * 1000);
                         }
                     }
@@ -2290,7 +2292,9 @@
                         actualStartDate = new Date(plannedStartDate.getTime() + startDelay * 24 * 60 * 60 * 1000);
                         
                         if (statusSeed < 35) { // 35%概率已完成
-                            const completionDelay = ((productSeed + currentOrgIndex * 11) % 20) - 5; // -5到14天延迟
+                            // Old: ((productSeed + currentOrgIndex * 11) % 20) - 5; // -5 to 14. Prob > 0: 14/20 (70%)
+                            // New: ((productSeed + currentOrgIndex * 11) % 20) - 13; // -13 to 6. Prob > 0: 6/20 (30%)
+                            const completionDelay = ((productSeed + currentOrgIndex * 11) % 20) - 13; 
                             actualEndDate = new Date(plannedEndDate.getTime() + completionDelay * 24 * 60 * 60 * 1000);
                         }
                     }
@@ -2300,7 +2304,9 @@
                         actualStartDate = new Date(plannedStartDate.getTime() + startDelay * 24 * 60 * 60 * 1000);
                         
                         if (statusSeed < 20) { // 20%概率已完成
-                            const completionDelay = ((productSeed + currentOrgIndex * 19) % 35) + 5; // 5到39天延迟
+                            // Old: ((productSeed + currentOrgIndex * 19) % 35) + 5; // 5 to 39. Prob > 0: 100%
+                            // New: ((productSeed + currentOrgIndex * 19) % 35) - 20; // -20 to 14. Prob > 0: 14/35 (40%)
+                            const completionDelay = ((productSeed + currentOrgIndex * 19) % 35) - 20; 
                             actualEndDate = new Date(plannedEndDate.getTime() + completionDelay * 24 * 60 * 60 * 1000);
                         }
                     }
@@ -3009,9 +3015,9 @@
                         statusClass = 'status-completed';
                         
                         // 1. 实际完成日期大于计划完成日期，文本标红
-                        // if (data.actualEndDate > data.plannedEndDate) {
-                        //     statusClass += ' text-danger';
-                        // }
+                        if (data.actualEndDate > data.plannedEndDate) {
+                            statusClass += ' text-danger';
+                        }
                         
                     } else if (data.actualStartDate) {
                         actualEndDate = '进行中';
